@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
+#include "Characters/CharacterType.h"
 #include "GameFramework/PlayerController.h"
 #include "FpsWaveCharacterController.generated.h"
 
@@ -23,8 +24,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
-	UPROPERTY(EditAnywhere)
-	bool bIsRunToggleMode = false;
 	
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<class UInputMappingContext> MappingContext;
@@ -40,9 +39,10 @@ private:
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
 
-	float RunningSpeed = 1200.f;
+	float RunningSpeed = 2000.f;
 	float WalkSpeed = 600.f;
 
-	
-	bool bIsRunning = false;
+	UPROPERTY(EditAnywhere)
+	EToggleMode ToggleMode = EToggleMode::ETM_ToggleNone;
+	EMoveState CharacterMoveState = EMoveState::EMS_Walk;
 };

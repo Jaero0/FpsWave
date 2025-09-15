@@ -10,12 +10,21 @@
 
 void AFpsWaveCharacterController::ChangeRunToggle()
 {
-	bIsRunToggleMode = !bIsRunToggleMode;
+	if (ToggleMode == EToggleMode::ETM_ToggleRun)
+	{
+		ToggleMode = EToggleMode::ETM_ToggleNone;
+	}
+	else
+	{
+		ToggleMode = EToggleMode::ETM_ToggleRun;
+	}
 }
 
 void AFpsWaveCharacterController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Player = Cast<AFpsWaveCharacter>(GetPawn());
 
 	if (MappingContext)
 	{
@@ -24,7 +33,6 @@ void AFpsWaveCharacterController::BeginPlay()
 		if (auto* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
 		{
 			Subsystem->AddMappingContext(MappingContext, 0);
-			Player = Cast<AFpsWaveCharacter>(GetOwner());
 		}
 	}
 }
@@ -46,33 +54,69 @@ void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue
 
 void AFpsWaveCharacterController::RunInputStarted(const FInputActionValue& InputActionValue)
 {
-	// 홀드 모드
-	if (bIsRunToggleMode == false)
+	// 홀드모드
+	if (ToggleMode == EToggleMode::ETM_ToggleNone)
 	{
-		bIsRunning = true;
+		CharacterMoveState = EMoveState::EMS_Run;
 		UpdateMoveSpeed();
 		return;
 	}
 
-	// 토글 모드
-	bIsRunning = !bIsRunning;
+	// 토글모드
+	if (CharacterMoveState == EMoveState::EMS_Run)
+	{
+		CharacterMoveState = EMoveState::EMS_Walk;
+	}
+	else //run상태가 아니면 즉시 run으로 바꿔줌
+	{
+		CharacterMoveState = EMoveState::EMS_Run;
+	}
+	
 	UpdateMoveSpeed();
 }
 
 void AFpsWaveCharacterController::RunInputCompleted(const FInputActionValue& InputActionValue)
 {
-	// 홀드 모드에서만 처리
-	if (!bIsRunToggleMode)
+	// 홀드모드에서만 처리
+	if (ToggleMode == EToggleMode::ETM_ToggleNone)
 	{
-		bIsRunning = false;
+		CharacterMoveState = EMoveState::EMS_Walk;
 		UpdateMoveSpeed();
 	}
-	// 토글 모드는 Completed 시점에 아무것도 안 함
+	// 토글모드는 Completed 시점에 아무것도 안 함
 }
 
 void AFpsWaveCharacterController::UpdateMoveSpeed()
 {
-	Player->GetCharacterMovement()->MaxWalkSpeed = bIsRunning ? RunningSpeed : WalkSpeed;
+	AFpsWaveCharacter* CurrentPlayer = Player;
+	if (!CurrentPlayer)
+	{
+		CurrentPlayer = Cast<AFpsWaveCharacter>(GetPawn());
+
+		if (!CurrentPlayer)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Controller에서 Player를 찾을 수 없음"));
+			return;
+		}
+
+		Player = CurrentPlayer;
+	}
+
+	if (UCharacterMovementComponent* Movement = Player->GetCharacterMovement())
+	{
+		switch (CharacterMoveState)
+		{
+		case EMoveState::EMS_Run:
+			Movement->MaxWalkSpeed = RunningSpeed;
+			break;
+		case EMoveState::EMS_Walk:
+			Movement->MaxWalkSpeed = WalkSpeed;
+			break;
+		case EMoveState::EMS_Crouch:
+			//todo
+			break;
+		}
+	}
 }
 
 void AFpsWaveCharacterController::SetupInputComponent()
