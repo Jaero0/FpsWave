@@ -17,9 +17,12 @@ UCLASS()
 class FPSWAVE_API AFpsWaveCharacterController : public APlayerController
 {
 	GENERATED_BODY()
-
+	
 public:
-	void ChangeRunToggle();
+	UFUNCTION()
+	void OnChangeRunToggle(bool bIsChecked);
+	UFUNCTION()
+	void OnChangeCrouchToggle(bool bIsChecked);
 
 protected:
 	virtual void BeginPlay() override;
@@ -36,13 +39,19 @@ private:
 	void RunInputCompleted(const FInputActionValue &InputActionValue);
 	void RunInputStarted(const FInputActionValue &InputActionValue);
 	void UpdateMoveSpeed();
+	void CrouchInputStarted(const FInputActionValue &InputActionValue);
+	void CrouchInputCompleted(const FInputActionValue &InputActionValue);
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
 
+	UPROPERTY(VisibleAnywhere)
 	float RunningSpeed = 2000.f;
+	UPROPERTY(VisibleAnywhere)
 	float WalkSpeed = 600.f;
+	UPROPERTY(VisibleAnywhere)
+	float CrouchSpeed = 30.f;
 
-	UPROPERTY(EditAnywhere)
-	EToggleMode ToggleMode = EToggleMode::ETM_ToggleNone;
+	EToggleMode RunToggleMode = EToggleMode::ETM_None;
+	EToggleMode CrouchToggleMode = EToggleMode::ETM_None;
 	EMoveState CharacterMoveState = EMoveState::EMS_Walk;
 };

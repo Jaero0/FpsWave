@@ -26,4 +26,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Input Asset")
 	TObjectPtr<class UInputAction> FpsTpsConversionAction;
+
+	UPROPERTY(EditAnywhere, Category="Input Asset")
+	TObjectPtr<class UInputAction> LookAction;
 };

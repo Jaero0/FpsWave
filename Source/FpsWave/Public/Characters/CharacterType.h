@@ -11,7 +11,6 @@ enum class EMoveState : uint8
 UENUM(BlueprintType)
 enum class EToggleMode : uint8
 {
-	ETM_ToggleNone UMETA(DisplayName=ToggleNone),
-	ETM_ToggleRun UMETA(DisplayName=ToggleRun),
-	ETM_ToggleCrouch UMETA(DisplayName=ToggleCrouch)
+	ETM_None UMETA(DisplayName=None),
+	ETM_Toggle UMETA(DisplayName=Toggle),
 };

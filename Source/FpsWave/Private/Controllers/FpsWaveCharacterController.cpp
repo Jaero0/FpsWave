@@ -5,20 +5,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Characters/FpsWaveCharacter.h"
+#include "Components/CheckBox.h"
 #include "DataAssets/InputDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
-
-void AFpsWaveCharacterController::ChangeRunToggle()
-{
-	if (ToggleMode == EToggleMode::ETM_ToggleRun)
-	{
-		ToggleMode = EToggleMode::ETM_ToggleNone;
-	}
-	else
-	{
-		ToggleMode = EToggleMode::ETM_ToggleRun;
-	}
-}
+#include "HUD/Toggles.h"
 
 void AFpsWaveCharacterController::BeginPlay()
 {
@@ -41,8 +31,6 @@ void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue
 {
 	FVector2D Vector2D = InputActionValue.Get<FVector2D>();
 
-	//UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(Vector2D.ToString()));
-
 	const FRotator Rotation = GetControlRotation();
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
 
@@ -50,40 +38,6 @@ void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue
 	GetPawn()->AddMovementInput(ForwardDirection, Vector2D.Y);
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 	GetPawn()->AddMovementInput(RightDirection, Vector2D.X);
-}
-
-void AFpsWaveCharacterController::RunInputStarted(const FInputActionValue& InputActionValue)
-{
-	// 홀드모드
-	if (ToggleMode == EToggleMode::ETM_ToggleNone)
-	{
-		CharacterMoveState = EMoveState::EMS_Run;
-		UpdateMoveSpeed();
-		return;
-	}
-
-	// 토글모드
-	if (CharacterMoveState == EMoveState::EMS_Run)
-	{
-		CharacterMoveState = EMoveState::EMS_Walk;
-	}
-	else //run상태가 아니면 즉시 run으로 바꿔줌
-	{
-		CharacterMoveState = EMoveState::EMS_Run;
-	}
-	
-	UpdateMoveSpeed();
-}
-
-void AFpsWaveCharacterController::RunInputCompleted(const FInputActionValue& InputActionValue)
-{
-	// 홀드모드에서만 처리
-	if (ToggleMode == EToggleMode::ETM_ToggleNone)
-	{
-		CharacterMoveState = EMoveState::EMS_Walk;
-		UpdateMoveSpeed();
-	}
-	// 토글모드는 Completed 시점에 아무것도 안 함
 }
 
 void AFpsWaveCharacterController::UpdateMoveSpeed()
@@ -114,10 +68,81 @@ void AFpsWaveCharacterController::UpdateMoveSpeed()
 			break;
 		case EMoveState::EMS_Crouch:
 			//todo
+			Movement->MaxWalkSpeed = CrouchSpeed;
 			break;
 		}
 	}
 }
+
+void AFpsWaveCharacterController::OnChangeRunToggle(bool bIsChecked)
+{
+	RunToggleMode = bIsChecked ? EToggleMode::ETM_Toggle : EToggleMode::ETM_None;
+}
+
+void AFpsWaveCharacterController::OnChangeCrouchToggle(bool bIsChecked)
+{
+	CrouchToggleMode = bIsChecked ? EToggleMode::ETM_Toggle : EToggleMode::ETM_None;
+}
+
+void AFpsWaveCharacterController::RunInputStarted(const FInputActionValue& InputActionValue)
+{
+	if (RunToggleMode == EToggleMode::ETM_None) // 홀드 모드
+	{
+		CharacterMoveState = EMoveState::EMS_Run;
+		UpdateMoveSpeed();
+		return;
+	}
+
+	// 토글 모드
+	CharacterMoveState = (CharacterMoveState == EMoveState::EMS_Run)
+		? EMoveState::EMS_Walk
+		: EMoveState::EMS_Run;
+
+	UpdateMoveSpeed();
+}
+
+
+void AFpsWaveCharacterController::CrouchInputStarted(const FInputActionValue& InputActionValue)
+{
+	if (CrouchToggleMode == EToggleMode::ETM_None) // 홀드 모드
+	{
+		CharacterMoveState = EMoveState::EMS_Crouch;
+		UpdateMoveSpeed();
+		return;
+	}
+
+	// 토글 모드
+	CharacterMoveState = (CharacterMoveState == EMoveState::EMS_Crouch)
+		? EMoveState::EMS_Walk
+		: EMoveState::EMS_Crouch;
+
+	UpdateMoveSpeed();
+}
+
+void AFpsWaveCharacterController::RunInputCompleted(const FInputActionValue& InputActionValue)
+{
+	if (RunToggleMode == EToggleMode::ETM_None) // 홀드 모드에서만 처리
+	{
+		if (CharacterMoveState == EMoveState::EMS_Run)
+		{
+			CharacterMoveState = EMoveState::EMS_Walk;
+			UpdateMoveSpeed();
+		}
+	}
+}
+
+void AFpsWaveCharacterController::CrouchInputCompleted(const FInputActionValue& InputActionValue)
+{
+	if (CrouchToggleMode == EToggleMode::ETM_None) // 홀드 모드에서만 처리
+	{
+		if (CharacterMoveState == EMoveState::EMS_Crouch)
+		{
+			CharacterMoveState = EMoveState::EMS_Walk;
+			UpdateMoveSpeed();
+		}
+	}
+}
+
 
 void AFpsWaveCharacterController::SetupInputComponent()
 {
@@ -131,6 +156,8 @@ void AFpsWaveCharacterController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(InputDataAsset->MoveAction, ETriggerEvent::Triggered, this, &AFpsWaveCharacterController::Move);
 			EnhancedInputComponent->BindAction(InputDataAsset->RunAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::RunInputStarted);
 			EnhancedInputComponent->BindAction(InputDataAsset->RunAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::RunInputCompleted);
+			EnhancedInputComponent->BindAction(InputDataAsset->CrouchAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::CrouchInputStarted);
+			EnhancedInputComponent->BindAction(InputDataAsset->CrouchAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::CrouchInputCompleted);
 		}
 	}
 }
