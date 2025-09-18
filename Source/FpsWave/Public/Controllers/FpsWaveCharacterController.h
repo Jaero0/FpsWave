@@ -10,6 +10,10 @@
 
 struct FInputActionValue;
 
+DECLARE_DELEGATE(OnTpsFpsTypeChangedDelegate)
+DECLARE_DELEGATE(OnFreeCameraStartedDelegate)
+DECLARE_DELEGATE(OnFreeCameraCompletedDelegate)
+
 /**
  * 
  */
@@ -23,6 +27,10 @@ public:
 	void OnChangeRunToggle(bool bIsChecked);
 	UFUNCTION()
 	void OnChangeCrouchToggle(bool bIsChecked);
+	
+	OnTpsFpsTypeChangedDelegate OnTpsFpsTypeChangedDelegate;
+	OnFreeCameraStartedDelegate OnFreeCameraStartedDelegate;
+	OnFreeCameraCompletedDelegate OnFreeCameraCompletedDelegate;
 
 protected:
 	virtual void BeginPlay() override;
@@ -33,6 +41,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<class UInputDataAsset> InputDataAsset;
+	
 
 private:
 	void Move(const FInputActionValue &InputActionValue);
@@ -41,6 +50,11 @@ private:
 	void UpdateMoveSpeed();
 	void CrouchInputStarted(const FInputActionValue &InputActionValue);
 	void CrouchInputCompleted(const FInputActionValue &InputActionValue);
+	void TpsFpsConversion();
+	void Look(const FInputActionValue &InputActionValue);
+	void LookFreeCameraStarted();
+	void LookFreeCameraTriggered(const FInputActionValue& InputActionValue);
+	void LookFreeCameraCompleted();
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
 
@@ -51,7 +65,20 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	float CrouchSpeed = 30.f;
 
+	FRotator FreeCameraStartedRotation;
+	float CurrentFreeCamYaw = 0.f;
+	float CurrentFreeCamPitch = 0.f;
+	bool bIsFreeCamStarted = false;
+
 	EToggleMode RunToggleMode = EToggleMode::ETM_None;
 	EToggleMode CrouchToggleMode = EToggleMode::ETM_None;
 	EMoveState CharacterMoveState = EMoveState::EMS_Walk;
+	EPointOfViewType PointOfViewType = EPointOfViewType::EPT_ThirdPersonView;
+
+public:
+	FORCEINLINE
+	EPointOfViewType GetPointOfViewType() const
+	{
+		return PointOfViewType;
+	}
 };

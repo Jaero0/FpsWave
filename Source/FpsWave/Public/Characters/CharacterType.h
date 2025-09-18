@@ -14,3 +14,11 @@ enum class EToggleMode : uint8
 	ETM_None UMETA(DisplayName=None),
 	ETM_Toggle UMETA(DisplayName=Toggle),
 };
+
+UENUM(BlueprintType)
+enum class EPointOfViewType : uint8
+{
+	EPT_FirstPersonView UMETA(DisplayName="First Person View"),
+	EPT_ThirdPersonView UMETA(DisplayName="Third Person View"),
+	//EPT_FreeCameraView UMETA(DisplayName="Free Camera View")
+};

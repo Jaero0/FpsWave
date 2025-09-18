@@ -29,4 +29,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Input Asset")
 	TObjectPtr<class UInputAction> LookAction;
+
+	UPROPERTY(EditAnywhere, Category="Input Asset")
+	TObjectPtr<class UInputAction> FreeCameraAction;
 };

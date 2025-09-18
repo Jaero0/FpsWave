@@ -4,10 +4,12 @@
 #include "Controllers/FpsWaveCharacterController.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Camera/CameraComponent.h"
 #include "Characters/FpsWaveCharacter.h"
 #include "Components/CheckBox.h"
 #include "DataAssets/InputDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "HUD/Toggles.h"
 
 void AFpsWaveCharacterController::BeginPlay()
@@ -25,6 +27,11 @@ void AFpsWaveCharacterController::BeginPlay()
 			Subsystem->AddMappingContext(MappingContext, 0);
 		}
 	}
+	
+	if (OnTpsFpsTypeChangedDelegate.IsBound())
+	{
+		OnTpsFpsTypeChangedDelegate.Execute();
+	}
 }
 
 void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue)
@@ -40,6 +47,116 @@ void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue
 	GetPawn()->AddMovementInput(RightDirection, Vector2D.X);
 }
 
+void AFpsWaveCharacterController::TpsFpsConversion()
+{
+	if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
+	{
+		PointOfViewType = EPointOfViewType::EPT_ThirdPersonView;
+	}
+	else
+	{
+		PointOfViewType = EPointOfViewType::EPT_FirstPersonView;
+	}
+
+	OnTpsFpsTypeChangedDelegate.Execute();
+}
+
+void AFpsWaveCharacterController::LookFreeCameraStarted()
+{
+	CurrentFreeCamYaw = 0.f;
+	CurrentFreeCamPitch = 0.f;
+    
+	if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
+	{
+		FreeCameraStartedRotation = Player->GetFpsCamera()->GetComponentRotation();
+	}
+	else
+	{
+		FreeCameraStartedRotation = Player->GetTpsSpringArm()->GetRelativeRotation();
+	}
+
+	bIsFreeCamStarted = true;
+	OnFreeCameraStartedDelegate.Execute();
+}
+
+void AFpsWaveCharacterController::Look(const FInputActionValue& InputActionValue)
+{
+	FVector2D LookAxis = InputActionValue.Get<FVector2D>();
+	
+	if (bIsFreeCamStarted == true)
+	{
+		if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
+		{
+			CurrentFreeCamPitch += LookAxis.Y;
+			CurrentFreeCamPitch = FMath::Clamp(CurrentFreeCamPitch, -60.f, 70.f);
+
+			CurrentFreeCamYaw += LookAxis.X;
+			CurrentFreeCamYaw = FMath::Clamp(CurrentFreeCamYaw, -70.f, 70.f);
+
+			// 월드 회전값으로 직접 설정
+			FRotator NewWorldRot = FreeCameraStartedRotation;
+			NewWorldRot.Pitch += CurrentFreeCamPitch;
+			NewWorldRot.Yaw += CurrentFreeCamYaw;
+			Player->GetFpsCamera()->SetWorldRotation(NewWorldRot); 
+		}
+		else
+		{
+			CurrentFreeCamPitch += LookAxis.Y;
+			CurrentFreeCamPitch = FMath::Clamp(CurrentFreeCamPitch, -60.f, 70.f);
+
+			CurrentFreeCamYaw += LookAxis.X;
+
+			// 시작 회전값에 누적된 값을 더해서 새로운 회전값 계산
+			FRotator NewRot = FreeCameraStartedRotation;
+			NewRot.Pitch += CurrentFreeCamPitch;
+			NewRot.Yaw += CurrentFreeCamYaw;
+			Player->GetTpsSpringArm()->SetRelativeRotation(NewRot);
+		}
+	}
+	else
+	{
+		AddYawInput(LookAxis.X);
+
+		if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
+		{
+			AddPitchInput(LookAxis.Y * -1);
+
+			FRotator ControlRot = GetControlRotation();
+			ControlRot.Pitch = FMath::ClampAngle(ControlRot.Pitch, -60.f, 70.f);
+			SetControlRotation(ControlRot);
+		}
+		else
+		{
+			FRotator NewRot = Player->GetTpsSpringArm()->GetRelativeRotation();
+			NewRot.Pitch = FMath::Clamp(NewRot.Pitch + LookAxis.Y, -60.f, 70.f);
+			Player->GetTpsSpringArm()->SetRelativeRotation(NewRot);
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Axis: %s"), *FString(LookAxis.ToString()));
+}
+
+void AFpsWaveCharacterController::LookFreeCameraCompleted()
+{
+    // TODO: 러프로 자연스럽게 카메라 원위치
+    if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
+    {
+    	Player->GetFpsCamera()->SetRelativeRotation(FreeCameraStartedRotation);
+    }
+    else
+    {
+	    Player->GetTpsSpringArm()->SetRelativeRotation(FreeCameraStartedRotation);
+    }
+    
+    // 누적값 리셋
+    CurrentFreeCamYaw = 0.f;
+    CurrentFreeCamPitch = 0.f;
+	bIsFreeCamStarted = false;
+
+	OnFreeCameraCompletedDelegate.Execute();
+}
+
+#pragma region 달리기 / 웅크리기 움직임 속도 조절 메서드
 void AFpsWaveCharacterController::UpdateMoveSpeed()
 {
 	AFpsWaveCharacter* CurrentPlayer = Player;
@@ -101,7 +218,6 @@ void AFpsWaveCharacterController::RunInputStarted(const FInputActionValue& Input
 	UpdateMoveSpeed();
 }
 
-
 void AFpsWaveCharacterController::CrouchInputStarted(const FInputActionValue& InputActionValue)
 {
 	if (CrouchToggleMode == EToggleMode::ETM_None) // 홀드 모드
@@ -144,10 +260,11 @@ void AFpsWaveCharacterController::CrouchInputCompleted(const FInputActionValue& 
 }
 
 
+#pragma endregion
+
 void AFpsWaveCharacterController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-
 	
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 	{
@@ -158,6 +275,11 @@ void AFpsWaveCharacterController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(InputDataAsset->RunAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::RunInputCompleted);
 			EnhancedInputComponent->BindAction(InputDataAsset->CrouchAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::CrouchInputStarted);
 			EnhancedInputComponent->BindAction(InputDataAsset->CrouchAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::CrouchInputCompleted);
+			EnhancedInputComponent->BindAction(InputDataAsset->FpsTpsConversionAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::TpsFpsConversion);
+			EnhancedInputComponent->BindAction(InputDataAsset->LookAction, ETriggerEvent::Triggered, this, &AFpsWaveCharacterController::Look);
+			EnhancedInputComponent->BindAction(InputDataAsset->FreeCameraAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::LookFreeCameraStarted);
+			//EnhancedInputComponent->BindAction(InputDataAsset->FreeCameraAction, ETriggerEvent::Triggered, this, &AFpsWaveCharacterController::LookFreeCameraTriggered);
+			EnhancedInputComponent->BindAction(InputDataAsset->FreeCameraAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::LookFreeCameraCompleted);
 		}
 	}
 }
