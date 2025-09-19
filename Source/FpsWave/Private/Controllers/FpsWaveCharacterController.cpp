@@ -41,13 +41,10 @@ void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue
 
 	const FRotator Rotation = GetControlRotation();
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
-
 	ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	GetPawn()->AddMovementInput(ForwardDirection, Vector2D.Y);
 	RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	GetPawn()->AddMovementInput(ForwardDirection, Vector2D.Y);
 	GetPawn()->AddMovementInput(RightDirection, Vector2D.X);
-
-	
 }
 
 #pragma region 시점 제어
