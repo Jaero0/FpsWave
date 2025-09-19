@@ -26,10 +26,10 @@ AFpsWaveCharacter::AFpsWaveCharacter()
 	FpsCamera->SetActive(false);
 	FpsCamera->SetupAttachment(GetMesh(), TEXT("headSocket"));
 
-	bUseControllerRotationYaw = false;
+	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->RotationRate = UE::Math::TRotator(0.0, 460.0, 0.0);
 	
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
