@@ -58,12 +58,15 @@ private:
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
 
-	UPROPERTY(VisibleAnywhere)
-	float RunningSpeed = 2000.f;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
+	float RunningSpeed = 1200.f;
+	UPROPERTY(EditAnywhere)
 	float WalkSpeed = 600.f;
-	UPROPERTY(VisibleAnywhere)
-	float CrouchSpeed = 30.f;
+	UPROPERTY(EditAnywhere)
+	float CrouchSpeed = 200.f;
+
+	FVector ForwardDirection;
+	FVector RightDirection;
 
 	FRotator FreeCameraStartedRotation;
 	float CurrentFreeCamYaw = 0.f;

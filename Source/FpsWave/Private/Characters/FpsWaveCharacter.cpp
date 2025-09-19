@@ -17,21 +17,19 @@ AFpsWaveCharacter::AFpsWaveCharacter()
 
 	TpsSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("TpsSpringArm"));
 	TpsSpringArm->SetupAttachment(GetRootComponent());
-	TpsSpringArm->bUsePawnControlRotation = false;
-	TpsSpringArm->bInheritPitch = true;
-	TpsSpringArm->bInheritRoll = true;
-	TpsSpringArm->bInheritYaw = true;
+	TpsSpringArm->TargetArmLength = MaxTpsSpringArmLength;
 	
 	TpsCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("TpsCamera"));
 	TpsCamera->SetupAttachment(TpsSpringArm);
-	TpsCamera->bUsePawnControlRotation = false;
 	
 	FpsCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FpsCamera"));
 	FpsCamera->SetActive(false);
 	FpsCamera->SetupAttachment(GetMesh(), TEXT("headSocket"));
-	FpsCamera->bUsePawnControlRotation = true;
-	
-	GetCharacterMovement()->bOrientRotationToMovement = false;
+
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = UE::Math::TRotator(0.0, 460.0, 0.0);
 	
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -54,24 +52,35 @@ void AFpsWaveCharacter::BeginPlay()
 
 void AFpsWaveCharacter::OnChangePointOfViewType()
 {
-	if (FpsWaveController)
-	{
-		EPointOfViewType ViewType = FpsWaveController->GetPointOfViewType();
+	bIsCameraConversionTriggered = true;
+	
+	if (!FpsWaveController) return;
 
-		//todo lerp로 변환시 자연스럽게 이동하도록
-		switch (ViewType)
+	EPointOfViewType ViewType = FpsWaveController->GetPointOfViewType();
+
+	if (ViewType == EPointOfViewType::EPT_FirstPersonView)
+	{
+		CurrentTargetArmLength = MinTpsSpringArmLength;
+		
+		if (FpsWaveController)
 		{
-		case EPointOfViewType::EPT_FirstPersonView:
-			FpsCamera->SetActive(true);
-			TpsCamera->SetActive(false);
-			TpsSpringArm->SetActive(false);
-			break;
-		case EPointOfViewType::EPT_ThirdPersonView:
-			FpsCamera->SetActive(false);
-			TpsCamera->SetActive(true);
-			TpsSpringArm->SetActive(true);
-			break;
+			FpsWaveController->SetControlRotation(FRotator(-15.f, GetActorRotation().Yaw, 0.f));
 		}
+		FpsCamera->SetRelativeRotation(DefaultFpsCameraRot);
+
+		FpsCamera->SetActive(true);
+		TpsCamera->SetActive(false);
+		TpsSpringArm->SetActive(false);
+	}
+	else if (ViewType == EPointOfViewType::EPT_ThirdPersonView)
+	{
+		CurrentTargetArmLength = MaxTpsSpringArmLength;
+
+		TpsSpringArm->SetRelativeRotation(DefaultTpsSpringArmRot);
+		
+		FpsCamera->SetActive(false);
+		TpsCamera->SetActive(true);
+		TpsSpringArm->SetActive(true);
 	}
 }
 
@@ -97,6 +106,18 @@ void AFpsWaveCharacter::OnFreeCameraCompleted()
 void AFpsWaveCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (bIsCameraConversionTriggered == true)
+	{
+		float Current = TpsSpringArm->TargetArmLength;
+		float Interp = FMath::FInterpTo(Current, CurrentTargetArmLength, DeltaTime, CameraConversionInterpSpeed);
+		TpsSpringArm->TargetArmLength = Interp;
+		
+		if (FMath::IsNearlyEqual(TpsSpringArm->TargetArmLength, CurrentTargetArmLength))
+		{
+			bIsCameraConversionTriggered = false;
+		}
+	}
 }
 
 // Called to bind functionality to input

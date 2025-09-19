@@ -8,6 +8,7 @@
 #include "Characters/FpsWaveCharacter.h"
 #include "Components/CheckBox.h"
 #include "DataAssets/InputDataAsset.h"
+#include "DSP/LFO.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HUD/Toggles.h"
@@ -41,11 +42,15 @@ void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue
 	const FRotator Rotation = GetControlRotation();
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
 
-	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 	GetPawn()->AddMovementInput(ForwardDirection, Vector2D.Y);
-	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 	GetPawn()->AddMovementInput(RightDirection, Vector2D.X);
+
+	
 }
+
+#pragma region 시점 제어
 
 void AFpsWaveCharacterController::TpsFpsConversion()
 {
@@ -132,29 +137,27 @@ void AFpsWaveCharacterController::Look(const FInputActionValue& InputActionValue
 			Player->GetTpsSpringArm()->SetRelativeRotation(NewRot);
 		}
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Axis: %s"), *FString(LookAxis.ToString()));
 }
 
 void AFpsWaveCharacterController::LookFreeCameraCompleted()
 {
-    // TODO: 러프로 자연스럽게 카메라 원위치
-    if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
-    {
-    	Player->GetFpsCamera()->SetRelativeRotation(FreeCameraStartedRotation);
-    }
-    else
-    {
-	    Player->GetTpsSpringArm()->SetRelativeRotation(FreeCameraStartedRotation);
-    }
-    
-    // 누적값 리셋
-    CurrentFreeCamYaw = 0.f;
-    CurrentFreeCamPitch = 0.f;
+	if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
+	{
+		Player->GetFpsCamera()->SetRelativeRotation(FreeCameraStartedRotation);
+	}
+	else
+	{
+		Player->GetTpsSpringArm()->SetRelativeRotation(FreeCameraStartedRotation);
+	}
+
+	CurrentFreeCamPitch = 0.f;
+	CurrentFreeCamYaw = 0.f;
 	bIsFreeCamStarted = false;
 
 	OnFreeCameraCompletedDelegate.Execute();
 }
+
+#pragma endregion
 
 #pragma region 달리기 / 웅크리기 움직임 속도 조절 메서드
 void AFpsWaveCharacterController::UpdateMoveSpeed()
@@ -283,5 +286,4 @@ void AFpsWaveCharacterController::SetupInputComponent()
 		}
 	}
 }
-
 

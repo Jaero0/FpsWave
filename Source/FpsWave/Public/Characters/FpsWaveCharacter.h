@@ -25,22 +25,31 @@ protected:
 	void OnFreeCameraCompleted();
 
 private:
+#pragma region Camera
+	TObjectPtr<class AFpsWaveCharacterController> FpsWaveController;
+	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class USpringArmComponent> TpsSpringArm;
-	float FpsSpringArmLength = 0.f;
-	float TpsSpringArmLength = 250.f;
-
-	FRotator FreeCameraStartedRotation;
-	float CurrentFreeCamYaw = 0.f;
-	float CurrentFreeCamPitch = 0.f;
-	bool bIsFreeCamStarted = false;
+	float CurrentTargetArmLength = 0.f;
+	UPROPERTY(EditAnywhere)
+	float MaxTpsSpringArmLength = 250.f;
+	UPROPERTY(EditAnywhere)
+	float MinTpsSpringArmLength = 0.f;
+	UPROPERTY(EditAnywhere)
+	FRotator DefaultTpsSpringArmRot = FRotator(-15.f, 0.f, 0.f);
 	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class UCameraComponent> FpsCamera;
+	UPROPERTY(EditAnywhere)
+	FRotator DefaultFpsCameraRot = FRotator(0.f, 90.f, -90.f);
+	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> TpsCamera;
 
-	TObjectPtr<class AFpsWaveCharacterController> FpsWaveController;
+	UPROPERTY(EditAnywhere)
+	float CameraConversionInterpSpeed = 20.f;
+	bool bIsCameraConversionTriggered = false;
+#pragma endregion
 
 public:
 	FORCEINLINE
