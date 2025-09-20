@@ -78,6 +78,10 @@ private:
 	EMoveState CharacterMoveState = EMoveState::EMS_Walk;
 	EPointOfViewType PointOfViewType = EPointOfViewType::EPT_ThirdPersonView;
 
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> WidgetClass;
+
 public:
 	FORCEINLINE
 	EPointOfViewType GetPointOfViewType() const
