@@ -4,11 +4,8 @@
 #include "Controllers/FpsWaveCharacterController.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Camera/CameraComponent.h"
 #include "Characters/FpsWaveCharacter.h"
-#include "Components/CheckBox.h"
 #include "DataAssets/InputDataAsset.h"
-#include "DSP/LFO.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HUD/Toggles.h"
@@ -28,16 +25,23 @@ void AFpsWaveCharacterController::BeginPlay()
 			Subsystem->AddMappingContext(MappingContext, 0);
 		}
 	}
-	
-	if (OnTpsFpsTypeChangedDelegate.IsBound())
+
+	SetViewTarget(Player->GetTpsCameraChildActor()->GetChildActor());
+
+	if (WidgetClass)
 	{
-		OnTpsFpsTypeChangedDelegate.Execute();
+		if (UUserWidget* UserWidget = CreateWidget<UUserWidget>(GetWorld(), WidgetClass))
+		{
+			UserWidget->AddToViewport();
+		}
 	}
 }
 
 void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue)
 {
 	FVector2D Vector2D = InputActionValue.Get<FVector2D>();
+
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(Vector2D.ToString()));
 
 	const FRotator Rotation = GetControlRotation();
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
@@ -54,85 +58,90 @@ void AFpsWaveCharacterController::TpsFpsConversion()
 	if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
 	{
 		PointOfViewType = EPointOfViewType::EPT_ThirdPersonView;
+		SetViewTargetWithBlend(Player->GetTpsCameraChildActor()->GetChildActor(), 0.2f);
+		
 	}
 	else
 	{
 		PointOfViewType = EPointOfViewType::EPT_FirstPersonView;
+		SetViewTargetWithBlend(Player->GetFpsCameraChildActor()->GetChildActor(), 0.2f);
 	}
 
-	OnTpsFpsTypeChangedDelegate.Execute();
+	if (OnTpsFpsTypeChangedDelegate.IsBound())
+	{
+		OnTpsFpsTypeChangedDelegate.Execute();
+	}
 }
 
 void AFpsWaveCharacterController::LookFreeCameraStarted()
 {
 	CurrentFreeCamYaw = 0.f;
 	CurrentFreeCamPitch = 0.f;
+
+	// 현재 컨트롤러 회전을 SpringArm의 RelativeRotation으로 설정
+	FRotator CurrentControlRotation = GetControlRotation();
+	FRotator ActorRotation = Player->GetActorRotation();
+    
+	// 액터 회전을 기준으로 한 상대적인 회전 계산
+	FRotator RelativeRotation = CurrentControlRotation - ActorRotation;
     
 	if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
 	{
-		FreeCameraStartedRotation = Player->GetFpsCamera()->GetComponentRotation();
+		Player->GetFpsSpringArm()->SetRelativeRotation(RelativeRotation);
+		FreeCameraStartedRotation = Player->GetFpsSpringArm()->GetRelativeRotation();
 	}
 	else
 	{
+		Player->GetTpsSpringArm()->SetRelativeRotation(RelativeRotation);
 		FreeCameraStartedRotation = Player->GetTpsSpringArm()->GetRelativeRotation();
 	}
 
-	bIsFreeCamStarted = true;
-	OnFreeCameraStartedDelegate.Execute();
-}
+	PlayerCameraManager->ViewPitchMin = -60.f;
+	
 
+	bIsFreeCamStarted = true;
+	OnFreeCameraStartedDelegate.ExecuteIfBound();
+}
 void AFpsWaveCharacterController::Look(const FInputActionValue& InputActionValue)
 {
 	FVector2D LookAxis = InputActionValue.Get<FVector2D>();
 	
 	if (bIsFreeCamStarted == true)
 	{
+		CurrentFreeCamPitch += LookAxis.Y;
+    
+		// 정면 기준으로 상하 제한 (상단 60도, 하단 70도)
+		float AbsolutePitch = FreeCameraStartedRotation.Pitch + CurrentFreeCamPitch;
+		AbsolutePitch = FMath::Clamp(AbsolutePitch, -60.f, 70.f);
+		CurrentFreeCamPitch = AbsolutePitch - FreeCameraStartedRotation.Pitch;
+
+		CurrentFreeCamYaw += LookAxis.X;
 		if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
 		{
-			CurrentFreeCamPitch += LookAxis.Y;
-			CurrentFreeCamPitch = FMath::Clamp(CurrentFreeCamPitch, -60.f, 70.f);
-
-			CurrentFreeCamYaw += LookAxis.X;
 			CurrentFreeCamYaw = FMath::Clamp(CurrentFreeCamYaw, -70.f, 70.f);
+		}
 
-			// 월드 회전값으로 직접 설정
-			FRotator NewWorldRot = FreeCameraStartedRotation;
-			NewWorldRot.Pitch += CurrentFreeCamPitch;
-			NewWorldRot.Yaw += CurrentFreeCamYaw;
-			Player->GetFpsCamera()->SetWorldRotation(NewWorldRot); 
+		FRotator NewRot = FreeCameraStartedRotation;
+		NewRot.Pitch += CurrentFreeCamPitch;
+		NewRot.Yaw += CurrentFreeCamYaw;
+
+		if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
+		{
+			Player->GetFpsSpringArm()->SetRelativeRotation(NewRot);
 		}
 		else
 		{
-			CurrentFreeCamPitch += LookAxis.Y;
-			CurrentFreeCamPitch = FMath::Clamp(CurrentFreeCamPitch, -60.f, 70.f);
-
-			CurrentFreeCamYaw += LookAxis.X;
-
-			// 시작 회전값에 누적된 값을 더해서 새로운 회전값 계산
-			FRotator NewRot = FreeCameraStartedRotation;
-			NewRot.Pitch += CurrentFreeCamPitch;
-			NewRot.Yaw += CurrentFreeCamYaw;
 			Player->GetTpsSpringArm()->SetRelativeRotation(NewRot);
 		}
 	}
 	else
 	{
 		AddYawInput(LookAxis.X);
+		AddPitchInput(LookAxis.Y * -1);
 
-		if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
-		{
-			AddPitchInput(LookAxis.Y * -1);
-
-			FRotator ControlRot = GetControlRotation();
-			ControlRot.Pitch = FMath::ClampAngle(ControlRot.Pitch, -60.f, 70.f);
-			SetControlRotation(ControlRot);
-		}
-		else
-		{
-			FRotator NewRot = Player->GetTpsSpringArm()->GetRelativeRotation();
-			NewRot.Pitch = FMath::Clamp(NewRot.Pitch + LookAxis.Y, -60.f, 70.f);
-			Player->GetTpsSpringArm()->SetRelativeRotation(NewRot);
-		}
+		FRotator ControlRot = GetControlRotation();
+		ControlRot.Pitch = FMath::ClampAngle(ControlRot.Pitch, -60.f, 70.f);
+		SetControlRotation(ControlRot);
 	}
 }
 
@@ -140,7 +149,7 @@ void AFpsWaveCharacterController::LookFreeCameraCompleted()
 {
 	if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
 	{
-		Player->GetFpsCamera()->SetRelativeRotation(FreeCameraStartedRotation);
+		Player->GetFpsSpringArm()->SetRelativeRotation(FreeCameraStartedRotation);
 	}
 	else
 	{
@@ -151,7 +160,7 @@ void AFpsWaveCharacterController::LookFreeCameraCompleted()
 	CurrentFreeCamYaw = 0.f;
 	bIsFreeCamStarted = false;
 
-	OnFreeCameraCompletedDelegate.Execute();
+	OnFreeCameraCompletedDelegate.ExecuteIfBound();
 }
 
 #pragma endregion

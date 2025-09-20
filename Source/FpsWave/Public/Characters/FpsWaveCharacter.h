@@ -19,6 +19,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	void HideHeadBone();
 
 	void OnChangePointOfViewType();
 	void OnFreeCameraStarted();
@@ -30,21 +31,31 @@ private:
 	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class USpringArmComponent> TpsSpringArm;
-	float CurrentTargetArmLength = 0.f;
-	UPROPERTY(EditAnywhere)
-	float MaxTpsSpringArmLength = 250.f;
-	UPROPERTY(EditAnywhere)
-	float MinTpsSpringArmLength = 0.f;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class UChildActorComponent> TpsCameraChildActor;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class USpringArmComponent> FpsSpringArm;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class UChildActorComponent> FpsCameraChildActor;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class USpringArmComponent> TpsZoomInSpringArm;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class UChildActorComponent> TpsZoomInCameraChildActor;
+
+	FTimerHandle ViewTimerHandle;
+	
+	UPROPERTY(EditDefaultsOnly)
 	FRotator DefaultTpsSpringArmRot = FRotator(-15.f, 0.f, 0.f);
-	
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<class UCameraComponent> FpsCamera;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	FRotator DefaultFpsCameraRot = FRotator(0.f, 90.f, -90.f);
-	
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UCameraComponent> TpsCamera;
+	UPROPERTY(EditDefaultsOnly)
+	float DefaultTpsSpringArmLength = 250.f;
+	UPROPERTY(EditDefaultsOnly)
+	float DefaultFpsSpringArmLength = 0.f;
+	UPROPERTY(EditDefaultsOnly)
+	float DefaultTpsZoomInSpringArmLength = 100.f;
+
+	bool bIsTpsZoomIn = false;
 
 	UPROPERTY(EditAnywhere)
 	float CameraConversionInterpSpeed = 20.f;
@@ -59,8 +70,32 @@ public:
 	}
 
 	FORCEINLINE
-	TObjectPtr<class UCameraComponent> GetFpsCamera()
+	TObjectPtr<class USpringArmComponent> GetFpsSpringArm()
 	{
-		return FpsCamera;
+		return FpsSpringArm;
+	}
+
+	FORCEINLINE
+	TObjectPtr<class UChildActorComponent> GetTpsCameraChildActor()
+	{
+		return TpsCameraChildActor;
+	}
+
+	FORCEINLINE
+	TObjectPtr<class UChildActorComponent> GetFpsCameraChildActor()
+	{
+		return FpsCameraChildActor;
+	}
+
+	FORCEINLINE
+	TObjectPtr<class UChildActorComponent> GetTpsZoomInCameraChildActor()
+	{
+		return TpsZoomInCameraChildActor;
+	}
+
+	FORCEINLINE
+	bool GetIsTpsZoomIn() const
+	{
+		return bIsTpsZoomIn;
 	}
 };

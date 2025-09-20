@@ -8,6 +8,8 @@
 #include "Controllers/FpsWaveCharacterController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 // Sets default values
@@ -17,14 +19,21 @@ AFpsWaveCharacter::AFpsWaveCharacter()
 
 	TpsSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("TpsSpringArm"));
 	TpsSpringArm->SetupAttachment(GetRootComponent());
-	TpsSpringArm->TargetArmLength = MaxTpsSpringArmLength;
-	
-	TpsCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("TpsCamera"));
-	TpsCamera->SetupAttachment(TpsSpringArm);
-	
-	FpsCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FpsCamera"));
-	FpsCamera->SetActive(false);
-	FpsCamera->SetupAttachment(GetMesh(), TEXT("headSocket"));
+	TpsSpringArm->TargetArmLength = DefaultTpsSpringArmLength;
+	TpsCameraChildActor = CreateDefaultSubobject<UChildActorComponent>(TEXT("TpsCamera"));
+	TpsCameraChildActor->SetupAttachment(TpsSpringArm);
+
+	FpsSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("FpsSpringArm"));
+	FpsSpringArm->SetupAttachment(GetRootComponent());
+	FpsSpringArm->TargetArmLength = DefaultFpsSpringArmLength;
+	FpsCameraChildActor = CreateDefaultSubobject<UChildActorComponent>(TEXT("FpsCamera"));
+	FpsCameraChildActor->SetupAttachment(FpsSpringArm);
+
+	TpsZoomInSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("TpsZoomInSpringArm"));
+	TpsZoomInSpringArm->SetupAttachment(GetRootComponent());
+	TpsZoomInSpringArm->TargetArmLength = DefaultTpsZoomInSpringArmLength;
+	TpsZoomInCameraChildActor = CreateDefaultSubobject<UChildActorComponent>(TEXT("TpsZoomInCamera"));
+	TpsZoomInCameraChildActor->SetupAttachment(TpsZoomInSpringArm);
 
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
@@ -41,7 +50,7 @@ void AFpsWaveCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (auto Cont = Cast<AFpsWaveCharacterController>(GetLocalViewingPlayerController()))
+	if (auto Cont = Cast<AFpsWaveCharacterController>(GetWorld()->GetFirstPlayerController()))
 	{
 		FpsWaveController = Cont;
 		Cont->OnTpsFpsTypeChangedDelegate.BindUObject(this, &AFpsWaveCharacter::OnChangePointOfViewType);
@@ -50,74 +59,44 @@ void AFpsWaveCharacter::BeginPlay()
 	}
 }
 
+void AFpsWaveCharacter::HideHeadBone()
+{
+	GetMesh()->HideBoneByName(FName("neck_01"), PBO_None);
+}
+
 void AFpsWaveCharacter::OnChangePointOfViewType()
 {
-	bIsCameraConversionTriggered = true;
-	
 	if (!FpsWaveController) return;
 
-	EPointOfViewType ViewType = FpsWaveController->GetPointOfViewType();
+	EPointOfViewType PointOfViewType = FpsWaveController->GetPointOfViewType();
+	GetWorld()->GetTimerManager().ClearTimer(ViewTimerHandle);
 
-	if (ViewType == EPointOfViewType::EPT_FirstPersonView)
+	if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
 	{
-		CurrentTargetArmLength = MinTpsSpringArmLength;
-		
-		if (FpsWaveController)
-		{
-			FpsWaveController->SetControlRotation(FRotator(-15.f, GetActorRotation().Yaw, 0.f));
-		}
-		FpsCamera->SetRelativeRotation(DefaultFpsCameraRot);
-
-		FpsCamera->SetActive(true);
-		TpsCamera->SetActive(false);
-		TpsSpringArm->SetActive(false);
+		GetWorld()->GetTimerManager().SetTimer(ViewTimerHandle, this, &AFpsWaveCharacter::HideHeadBone, 0.1f, false);
 	}
-	else if (ViewType == EPointOfViewType::EPT_ThirdPersonView)
+	else
 	{
-		CurrentTargetArmLength = MaxTpsSpringArmLength;
-
-		TpsSpringArm->SetRelativeRotation(DefaultTpsSpringArmRot);
-		
-		FpsCamera->SetActive(false);
-		TpsCamera->SetActive(true);
-		TpsSpringArm->SetActive(true);
+		GetMesh()->UnHideBoneByName(FName("neck_01"));
 	}
 }
 
 void AFpsWaveCharacter::OnFreeCameraStarted()
 {
-	if (FpsWaveController && FpsWaveController->GetPointOfViewType() == EPointOfViewType::EPT_FirstPersonView)
-	{
-		FpsCamera->SetupAttachment(GetRootComponent());
-		FpsCamera->bUsePawnControlRotation = false;
-	}
+	TpsSpringArm->bUsePawnControlRotation = false;
+	FpsSpringArm->bUsePawnControlRotation = false;
 }
 
 void AFpsWaveCharacter::OnFreeCameraCompleted()
 {
-	if (FpsWaveController && FpsWaveController->GetPointOfViewType() == EPointOfViewType::EPT_FirstPersonView)
-	{
-		FpsCamera->SetupAttachment(GetMesh(), TEXT("headSocket"));
-		FpsCamera->bUsePawnControlRotation = true;
-	}
+	TpsSpringArm->bUsePawnControlRotation = true;
+	FpsSpringArm->bUsePawnControlRotation = true;
 }
 
 // Called every frame
 void AFpsWaveCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (bIsCameraConversionTriggered == true)
-	{
-		float Current = TpsSpringArm->TargetArmLength;
-		float Interp = FMath::FInterpTo(Current, CurrentTargetArmLength, DeltaTime, CameraConversionInterpSpeed);
-		TpsSpringArm->TargetArmLength = Interp;
-		
-		if (FMath::IsNearlyEqual(TpsSpringArm->TargetArmLength, CurrentTargetArmLength))
-		{
-			bIsCameraConversionTriggered = false;
-		}
-	}
 }
 
 // Called to bind functionality to input

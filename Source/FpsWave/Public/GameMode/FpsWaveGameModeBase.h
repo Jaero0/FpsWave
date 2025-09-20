@@ -14,8 +14,4 @@ class FPSWAVE_API AFpsWaveGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 protected:
-	virtual void BeginPlay() override;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UUserWidget> WidgetClass;
 };
