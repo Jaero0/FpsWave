@@ -35,6 +35,19 @@ void AFpsWaveCharacterController::BeginPlay()
 			UserWidget->AddToViewport();
 		}
 	}
+
+	PlayerCameraManager->ViewPitchMin = -60.f;
+	PlayerCameraManager->ViewPitchMax = 70.f;
+}
+
+void AFpsWaveCharacterController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (bIsReturningFromFreeCam)
+	{
+		InterpolateFreeCamToOriginCam(DeltaSeconds);
+	}
 }
 
 void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue)
@@ -96,9 +109,6 @@ void AFpsWaveCharacterController::LookFreeCameraStarted()
 		FreeCameraStartedRotation = Player->GetTpsSpringArm()->GetRelativeRotation();
 	}
 
-	PlayerCameraManager->ViewPitchMin = -60.f;
-	
-
 	bIsFreeCamStarted = true;
 	OnFreeCameraStartedDelegate.ExecuteIfBound();
 }
@@ -108,13 +118,13 @@ void AFpsWaveCharacterController::Look(const FInputActionValue& InputActionValue
 	
 	if (bIsFreeCamStarted == true)
 	{
+		//상하
 		CurrentFreeCamPitch += LookAxis.Y;
-    
-		// 정면 기준으로 상하 제한 (상단 60도, 하단 70도)
 		float AbsolutePitch = FreeCameraStartedRotation.Pitch + CurrentFreeCamPitch;
 		AbsolutePitch = FMath::Clamp(AbsolutePitch, -60.f, 70.f);
 		CurrentFreeCamPitch = AbsolutePitch - FreeCameraStartedRotation.Pitch;
 
+		//좌우
 		CurrentFreeCamYaw += LookAxis.X;
 		if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
 		{
@@ -138,29 +148,38 @@ void AFpsWaveCharacterController::Look(const FInputActionValue& InputActionValue
 	{
 		AddYawInput(LookAxis.X);
 		AddPitchInput(LookAxis.Y * -1);
-
-		FRotator ControlRot = GetControlRotation();
-		ControlRot.Pitch = FMath::ClampAngle(ControlRot.Pitch, -60.f, 70.f);
-		SetControlRotation(ControlRot);
 	}
 }
 
 void AFpsWaveCharacterController::LookFreeCameraCompleted()
 {
-	if (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
-	{
-		Player->GetFpsSpringArm()->SetRelativeRotation(FreeCameraStartedRotation);
-	}
-	else
-	{
-		Player->GetTpsSpringArm()->SetRelativeRotation(FreeCameraStartedRotation);
-	}
+	//Tick메서드에서 보간으로 카메라 원위치 시키는중
 
 	CurrentFreeCamPitch = 0.f;
 	CurrentFreeCamYaw = 0.f;
 	bIsFreeCamStarted = false;
+	bIsReturningFromFreeCam = true;
+}
 
-	OnFreeCameraCompletedDelegate.ExecuteIfBound();
+void AFpsWaveCharacterController::InterpolateFreeCamToOriginCam(float DeltaTime)
+{
+	USpringArmComponent* TargetSpringArm = (PointOfViewType == EPointOfViewType::EPT_FirstPersonView)
+		   ? Player->GetFpsSpringArm()
+		   : Player->GetTpsSpringArm();
+
+	FRotator CurrentRot = TargetSpringArm->GetRelativeRotation();
+	FRotator NewRot = FMath::RInterpConstantTo(CurrentRot, FreeCameraStartedRotation, DeltaTime, CamReturningInterpSpeed);
+
+	TargetSpringArm->SetRelativeRotation(NewRot);
+
+	// 목표에 충분히 가까워지면 보간 종료
+	if (NewRot.Equals(FreeCameraStartedRotation, 1.f))
+	{
+		TargetSpringArm->SetRelativeRotation(FreeCameraStartedRotation);
+		bIsReturningFromFreeCam = false;
+
+		OnFreeCameraCompletedDelegate.ExecuteIfBound();
+	}
 }
 
 #pragma endregion
@@ -292,4 +311,6 @@ void AFpsWaveCharacterController::SetupInputComponent()
 		}
 	}
 }
+
+
 

@@ -35,6 +35,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+	virtual void Tick(float DeltaSeconds) override;
 	
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<class UInputMappingContext> MappingContext;
@@ -55,6 +56,7 @@ private:
 	void LookFreeCameraStarted();
 	void LookFreeCameraTriggered(const FInputActionValue& InputActionValue);
 	void LookFreeCameraCompleted();
+	void InterpolateFreeCamToOriginCam(float DeltaTime);
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
 
@@ -72,6 +74,9 @@ private:
 	float CurrentFreeCamYaw = 0.f;
 	float CurrentFreeCamPitch = 0.f;
 	bool bIsFreeCamStarted = false;
+	bool bIsReturningFromFreeCam = false;
+	UPROPERTY(EditDefaultsOnly)
+	float CamReturningInterpSpeed = 100.f;
 
 	EToggleMode RunToggleMode = EToggleMode::ETM_None;
 	EToggleMode CrouchToggleMode = EToggleMode::ETM_None;

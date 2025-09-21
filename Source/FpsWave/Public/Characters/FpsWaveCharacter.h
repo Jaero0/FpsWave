@@ -45,10 +45,6 @@ private:
 	FTimerHandle ViewTimerHandle;
 	
 	UPROPERTY(EditDefaultsOnly)
-	FRotator DefaultTpsSpringArmRot = FRotator(-15.f, 0.f, 0.f);
-	UPROPERTY(EditDefaultsOnly)
-	FRotator DefaultFpsCameraRot = FRotator(0.f, 90.f, -90.f);
-	UPROPERTY(EditDefaultsOnly)
 	float DefaultTpsSpringArmLength = 250.f;
 	UPROPERTY(EditDefaultsOnly)
 	float DefaultFpsSpringArmLength = 0.f;
@@ -57,9 +53,6 @@ private:
 
 	bool bIsTpsZoomIn = false;
 
-	UPROPERTY(EditAnywhere)
-	float CameraConversionInterpSpeed = 20.f;
-	bool bIsCameraConversionTriggered = false;
 #pragma endregion
 
 public:
