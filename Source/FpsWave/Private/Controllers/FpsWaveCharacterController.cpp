@@ -50,6 +50,17 @@ void AFpsWaveCharacterController::Tick(float DeltaSeconds)
 	}
 }
 
+bool AFpsWaveCharacterController::GetIsFreeCamStarted() const
+{
+	return bIsFreeCamStarted;
+}
+
+void AFpsWaveCharacterController::SetCharacterMoveStateUpdateSpeed(EMoveState MoveState)
+{
+	CharacterMoveState = MoveState;
+	UpdateMoveSpeed();
+}
+
 void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue)
 {
 	FVector2D Vector2D = InputActionValue.Get<FVector2D>();
@@ -80,6 +91,10 @@ void AFpsWaveCharacterController::TpsFpsConversion()
 		SetViewTargetWithBlend(Player->GetFpsCameraChildActor()->GetChildActor(), 0.2f);
 	}
 
+	if (CharacterMoveState == EMoveState::EMS_ZoomInWalk)
+	{
+		SetCharacterMoveStateUpdateSpeed(EMoveState::EMS_Walk);
+	}
 	if (OnTpsFpsTypeChangedDelegate.IsBound())
 	{
 		OnTpsFpsTypeChangedDelegate.Execute();
@@ -182,6 +197,26 @@ void AFpsWaveCharacterController::InterpolateFreeCamToOriginCam(float DeltaTime)
 	}
 }
 
+void AFpsWaveCharacterController::ZoomInStarted()
+{
+	if (PointOfViewType == EPointOfViewType::EPT_ThirdPersonView)
+	{
+		SetViewTargetWithBlend(Player->GetTpsZoomInCameraChildActor()->GetChildActor(), 0.1f);
+		PointOfViewType = EPointOfViewType::EPT_ThirdPersonZoomInView;
+		SetCharacterMoveStateUpdateSpeed(EMoveState::EMS_ZoomInWalk);
+	}
+}
+
+void AFpsWaveCharacterController::ZoomInCompleted()
+{
+	if (PointOfViewType == EPointOfViewType::EPT_ThirdPersonZoomInView)
+	{
+		SetViewTargetWithBlend(Player->GetTpsCameraChildActor()->GetChildActor(), 0.1f);
+		PointOfViewType = EPointOfViewType::EPT_ThirdPersonView;
+		SetCharacterMoveStateUpdateSpeed(EMoveState::EMS_Walk);
+	}
+}
+
 #pragma endregion
 
 #pragma region 달리기 / 웅크리기 움직임 속도 조절 메서드
@@ -213,7 +248,10 @@ void AFpsWaveCharacterController::UpdateMoveSpeed()
 			break;
 		case EMoveState::EMS_Crouch:
 			//todo
-			Movement->MaxWalkSpeed = CrouchSpeed;
+			Movement->MaxWalkSpeed = Movement->MaxWalkSpeedCrouched;
+			break;
+		case EMoveState::EMS_ZoomInWalk:
+			Movement->MaxWalkSpeed = ZoomInWalkSpeed;
 			break;
 		}
 	}
@@ -231,6 +269,11 @@ void AFpsWaveCharacterController::OnChangeCrouchToggle(bool bIsChecked)
 
 void AFpsWaveCharacterController::RunInputStarted(const FInputActionValue& InputActionValue)
 {
+	if (CharacterMoveState == EMoveState::EMS_ZoomInWalk)
+	{
+		return;
+	}
+	
 	if (RunToggleMode == EToggleMode::ETM_None) // 홀드 모드
 	{
 		CharacterMoveState = EMoveState::EMS_Run;
@@ -248,6 +291,11 @@ void AFpsWaveCharacterController::RunInputStarted(const FInputActionValue& Input
 
 void AFpsWaveCharacterController::CrouchInputStarted(const FInputActionValue& InputActionValue)
 {
+	if (CharacterMoveState == EMoveState::EMS_ZoomInWalk)
+	{
+		return;
+	}
+	
 	if (CrouchToggleMode == EToggleMode::ETM_None) // 홀드 모드
 	{
 		CharacterMoveState = EMoveState::EMS_Crouch;
@@ -269,8 +317,7 @@ void AFpsWaveCharacterController::RunInputCompleted(const FInputActionValue& Inp
 	{
 		if (CharacterMoveState == EMoveState::EMS_Run)
 		{
-			CharacterMoveState = EMoveState::EMS_Walk;
-			UpdateMoveSpeed();
+			SetCharacterMoveStateUpdateSpeed(EMoveState::EMS_Walk);
 		}
 	}
 }
@@ -308,6 +355,8 @@ void AFpsWaveCharacterController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(InputDataAsset->FreeCameraAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::LookFreeCameraStarted);
 			//EnhancedInputComponent->BindAction(InputDataAsset->FreeCameraAction, ETriggerEvent::Triggered, this, &AFpsWaveCharacterController::LookFreeCameraTriggered);
 			EnhancedInputComponent->BindAction(InputDataAsset->FreeCameraAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::LookFreeCameraCompleted);
+			EnhancedInputComponent->BindAction(InputDataAsset->ZoomInAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ZoomInStarted);
+			EnhancedInputComponent->BindAction(InputDataAsset->ZoomInAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::ZoomInCompleted);
 		}
 	}
 }

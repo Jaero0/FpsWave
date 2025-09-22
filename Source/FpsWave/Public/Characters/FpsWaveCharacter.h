@@ -51,8 +51,6 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	float DefaultTpsZoomInSpringArmLength = 100.f;
 
-	bool bIsTpsZoomIn = false;
-
 #pragma endregion
 
 public:
@@ -84,11 +82,5 @@ public:
 	TObjectPtr<class UChildActorComponent> GetTpsZoomInCameraChildActor()
 	{
 		return TpsZoomInCameraChildActor;
-	}
-
-	FORCEINLINE
-	bool GetIsTpsZoomIn() const
-	{
-		return bIsTpsZoomIn;
 	}
 };

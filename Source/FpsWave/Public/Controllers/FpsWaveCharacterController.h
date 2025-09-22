@@ -57,6 +57,8 @@ private:
 	void LookFreeCameraTriggered(const FInputActionValue& InputActionValue);
 	void LookFreeCameraCompleted();
 	void InterpolateFreeCamToOriginCam(float DeltaTime);
+	void ZoomInStarted();
+	void ZoomInCompleted();
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
 
@@ -64,6 +66,8 @@ private:
 	float RunningSpeed = 1200.f;
 	UPROPERTY(EditAnywhere)
 	float WalkSpeed = 600.f;
+	UPROPERTY(EditAnywhere)
+	float ZoomInWalkSpeed = 350.f;
 	UPROPERTY(EditAnywhere)
 	float CrouchSpeed = 200.f;
 
@@ -73,10 +77,12 @@ private:
 	FRotator FreeCameraStartedRotation;
 	float CurrentFreeCamYaw = 0.f;
 	float CurrentFreeCamPitch = 0.f;
+	UPROPERTY(VisibleAnywhere)
 	bool bIsFreeCamStarted = false;
 	bool bIsReturningFromFreeCam = false;
 	UPROPERTY(EditDefaultsOnly)
 	float CamReturningInterpSpeed = 100.f;
+	bool bIsZoomIn = false;
 
 	EToggleMode RunToggleMode = EToggleMode::ETM_None;
 	EToggleMode CrouchToggleMode = EToggleMode::ETM_None;
@@ -93,4 +99,9 @@ public:
 	{
 		return PointOfViewType;
 	}
+
+	UFUNCTION(BlueprintPure)
+	bool GetIsFreeCamStarted() const;
+
+	void SetCharacterMoveStateUpdateSpeed(EMoveState MoveState);
 };
