@@ -24,3 +24,10 @@ enum class EPointOfViewType : uint8
 	EPT_ThirdPersonZoomInView UMETA(DisplayName="Third Person Zoom In View"),
 	//EPT_FreeCameraView UMETA(DisplayName="Free Camera View")
 };
+
+UENUM(BlueprintType)
+enum class EOverlapDetected : uint8
+{
+	EOD_None UMETA(DisplayName=None),
+	EOD_Weapon UMETA(DisplayName=Weapon)
+};

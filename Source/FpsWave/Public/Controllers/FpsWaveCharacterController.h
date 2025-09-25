@@ -45,6 +45,7 @@ protected:
 	
 
 private:
+	TObjectPtr<class USpringArmComponent> GetCurrentSpringArm() const;
 	void Move(const FInputActionValue &InputActionValue);
 	void RunInputCompleted(const FInputActionValue &InputActionValue);
 	void RunInputStarted(const FInputActionValue &InputActionValue);
@@ -54,11 +55,11 @@ private:
 	void TpsFpsConversion();
 	void Look(const FInputActionValue &InputActionValue);
 	void LookFreeCameraStarted();
-	void LookFreeCameraTriggered(const FInputActionValue& InputActionValue);
 	void LookFreeCameraCompleted();
 	void InterpolateFreeCamToOriginCam(float DeltaTime);
 	void ZoomInStarted();
 	void ZoomInCompleted();
+	void ApplyCrouchState();
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
 
@@ -68,12 +69,11 @@ private:
 	float WalkSpeed = 600.f;
 	UPROPERTY(EditAnywhere)
 	float ZoomInWalkSpeed = 350.f;
-	UPROPERTY(EditAnywhere)
-	float CrouchSpeed = 200.f;
 
 	FVector ForwardDirection;
 	FVector RightDirection;
 
+	float DefaultInterpolateTime = 0.1f;
 	FRotator FreeCameraStartedRotation;
 	float CurrentFreeCamYaw = 0.f;
 	float CurrentFreeCamPitch = 0.f;
@@ -81,17 +81,22 @@ private:
 	bool bIsFreeCamStarted = false;
 	bool bIsReturningFromFreeCam = false;
 	UPROPERTY(EditDefaultsOnly)
-	float CamReturningInterpSpeed = 100.f;
+	float CamReturningInterpSpeed = 200.f;
 	bool bIsZoomIn = false;
+	FVector CrouchStartedLocation;
+	bool bIsCrouchState = false;
 
 	EToggleMode RunToggleMode = EToggleMode::ETM_None;
 	EToggleMode CrouchToggleMode = EToggleMode::ETM_None;
 	EMoveState CharacterMoveState = EMoveState::EMS_Walk;
+	EMoveState PrevCharacterMoveState = EMoveState::EMS_Walk;
 	EPointOfViewType PointOfViewType = EPointOfViewType::EPT_ThirdPersonView;
 
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> WidgetClass;
+
+	void Interact();
 
 public:
 	FORCEINLINE
@@ -99,6 +104,9 @@ public:
 	{
 		return PointOfViewType;
 	}
+
+	UFUNCTION(BlueprintPure)
+	EMoveState GetCharacterMoveState() const;
 
 	UFUNCTION(BlueprintPure)
 	bool GetIsFreeCamStarted() const;

@@ -35,4 +35,7 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category="Input Asset")
 	TObjectPtr<class UInputAction> ZoomInAction;
+
+	UPROPERTY(EditAnywhere, Category="Input Asset")
+	TObjectPtr<class UInputAction> InteractionAction;
 };

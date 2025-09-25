@@ -3,8 +3,78 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CharacterType.h"
 #include "GameFramework/Character.h"
 #include "FpsWaveCharacter.generated.h"
+
+USTRUCT()
+struct FDefaultWeapon
+{
+	GENERATED_BODY()
+
+private:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AGun> DefaultRifle;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AGun> DefaultShotgun;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AMelee> DefaultKatana;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AMelee> DefaultHammer;
+
+public:
+FORCEINLINE
+	TSubclassOf<class AGun> GetDefaultRifle()
+	{
+		return DefaultRifle;
+	}
+
+FORCEINLINE
+	TSubclassOf<class AGun> GetDefaultShotgun()
+	{
+		return DefaultShotgun;
+	}
+
+FORCEINLINE
+	TSubclassOf<class AMelee> GetDefaultKatana()
+	{
+		return DefaultKatana;
+	}
+
+FORCEINLINE
+	TSubclassOf<class AMelee> GetDefaultHammer()
+	{
+		return DefaultHammer;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FWeaponInventory
+{
+	GENERATED_BODY()
+
+private:
+	UPROPERTY(EditAnywhere)
+	FDefaultWeapon DefaultWeapon;
+
+public:
+	FORCEINLINE
+	FDefaultWeapon GetDefaultWeapon()
+	{
+		return DefaultWeapon;
+	}
+
+public:
+	TObjectPtr<AGun> AttachedRifle;
+	TObjectPtr<AGun> AttachedShotgun;
+	TObjectPtr<AMelee> AttachedKatana;
+	TObjectPtr<AMelee> AttachedHammer;
+
+	// 기타 필요한 무기 정보들 추가 가능
+};
 
 UCLASS()
 class FPSWAVE_API AFpsWaveCharacter : public ACharacter
@@ -15,6 +85,8 @@ public:
 	AFpsWaveCharacter();
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void ChangeCapsuleSizeCrouch(EMoveState MoveState);
+	void Interact();
 
 protected:
 	// Called when the game starts or when spawned
@@ -26,6 +98,7 @@ protected:
 	void OnFreeCameraCompleted();
 
 private:
+	
 #pragma region Camera
 	TObjectPtr<class AFpsWaveCharacterController> FpsWaveController;
 	
@@ -34,9 +107,17 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class UChildActorComponent> TpsCameraChildActor;
 	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class USpringArmComponent> TpsCrouchSpringArm;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class UChildActorComponent> TpsCrouchCameraChildActor;
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class USpringArmComponent> FpsSpringArm;
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class UChildActorComponent> FpsCameraChildActor;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class USpringArmComponent> FpsCrouchSpringArm;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class UChildActorComponent> FpsCrouchCameraChildActor;
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class USpringArmComponent> TpsZoomInSpringArm;
 	UPROPERTY(VisibleAnywhere)
@@ -53,11 +134,25 @@ private:
 
 #pragma endregion
 
+	TObjectPtr<class AFpsWaveWeapon> DetectedWeapon;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess="true"))
+	FWeaponInventory WeaponInventory;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class AFpsWaveWeapon> EquippedWeapon;
+
+	EOverlapDetected OverlapDetectedType = EOverlapDetected::EOD_None;
+
 public:
 	FORCEINLINE
 	TObjectPtr<class USpringArmComponent> GetTpsSpringArm()
 	{
 		return TpsSpringArm;
+	}
+
+	FORCEINLINE
+	TObjectPtr<class USpringArmComponent> GetTpsCrouchSpringArm()
+	{
+		return TpsCrouchSpringArm;
 	}
 
 	FORCEINLINE
@@ -67,9 +162,21 @@ public:
 	}
 
 	FORCEINLINE
+	TObjectPtr<class USpringArmComponent> GetFpsCrouchSpringArm()
+	{
+		return FpsCrouchSpringArm;
+	}
+
+	FORCEINLINE
 	TObjectPtr<class UChildActorComponent> GetTpsCameraChildActor()
 	{
 		return TpsCameraChildActor;
+	}
+
+	FORCEINLINE
+	TObjectPtr<class UChildActorComponent> GetTpsCrouchCameraChildActor()
+	{
+		return TpsCrouchCameraChildActor;
 	}
 
 	FORCEINLINE
@@ -79,8 +186,38 @@ public:
 	}
 
 	FORCEINLINE
+	TObjectPtr<class UChildActorComponent> GetFpsCrouchCameraChildActor()
+	{
+		return FpsCrouchCameraChildActor;
+	}
+
+	FORCEINLINE
 	TObjectPtr<class UChildActorComponent> GetTpsZoomInCameraChildActor()
 	{
 		return TpsZoomInCameraChildActor;
+	}
+
+	FORCEINLINE
+	TObjectPtr<AFpsWaveWeapon> GetDetectedWeapon()
+	{
+		return DetectedWeapon;
+	}
+
+	FORCEINLINE
+	void SetDetectedWeapon(AFpsWaveWeapon* Weapon)
+	{
+		this->DetectedWeapon = Weapon;
+	}
+
+	FORCEINLINE
+	EOverlapDetected GetOverlapDetectedType()
+	{
+		return OverlapDetectedType;
+	}
+
+	FORCEINLINE
+	void SetOverlapDetectedType(EOverlapDetected DetectedType)
+	{
+		this->OverlapDetectedType = DetectedType;
 	}
 };
