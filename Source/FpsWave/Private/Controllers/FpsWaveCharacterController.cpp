@@ -53,9 +53,52 @@ void AFpsWaveCharacterController::Tick(float DeltaSeconds)
 
 void AFpsWaveCharacterController::Interact()
 {
-	if (Player)
+	if (OnInteractionDelegate.IsBound())
 	{
-		Player->Interact();
+		OnInteractionDelegate.Execute();
+	}
+}
+
+void AFpsWaveCharacterController::ChangeWeapon1()
+{
+	if (OnWeaponChange_Key_Delegate.IsBound())
+	{
+		OnWeaponChange_Key_Delegate.Execute(1);
+	}
+}
+
+void AFpsWaveCharacterController::ChangeWeapon2()
+{
+	if (OnWeaponChange_Key_Delegate.IsBound())
+	{
+		OnWeaponChange_Key_Delegate.Execute(2);
+	}
+}
+
+void AFpsWaveCharacterController::ChangeWeapon3()
+{
+	if (OnWeaponChange_Key_Delegate.IsBound())
+	{
+		OnWeaponChange_Key_Delegate.Execute(3);
+	}
+}
+
+void AFpsWaveCharacterController::ChangeWeapon4()
+{
+	if (OnWeaponChange_Key_Delegate.IsBound())
+	{
+		OnWeaponChange_Key_Delegate.Execute(4);
+	}
+}
+
+void AFpsWaveCharacterController::ChangeWeaponMouseWheel(const FInputActionValue& InputActionValue)
+{
+	float Axis = InputActionValue.Get<float>();
+	int32 I = FMath::RoundToInt(Axis);
+
+	if (OnWeaponChange_MouseWheel_Delegate.IsBound())
+	{
+		OnWeaponChange_MouseWheel_Delegate.Execute(I);
 	}
 }
 
@@ -130,7 +173,11 @@ void AFpsWaveCharacterController::LookFreeCameraStarted()
 	GetCurrentSpringArm()->SetRelativeRotation(FreeCameraStartedRotation);
 	
 	bIsFreeCamStarted = true;
-	OnFreeCameraStartedDelegate.ExecuteIfBound();
+
+	if (OnFreeCameraStartedDelegate.IsBound())
+	{
+		OnFreeCameraStartedDelegate.Execute();
+	}
 }
 
 void AFpsWaveCharacterController::Look(const FInputActionValue& InputActionValue)
@@ -190,7 +237,11 @@ void AFpsWaveCharacterController::InterpolateFreeCamToOriginCam(float DeltaTime)
 	{
 		TargetSpringArm->SetRelativeRotation(FreeCameraStartedRotation);
 		bIsReturningFromFreeCam = false;
-		OnFreeCameraCompletedDelegate.ExecuteIfBound();
+
+		if (OnFreeCameraCompletedDelegate.IsBound())
+		{
+			OnFreeCameraCompletedDelegate.ExecuteIfBound();
+		}
 	}
 }
 
@@ -428,6 +479,11 @@ void AFpsWaveCharacterController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(InputDataAsset->ZoomInAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ZoomInStarted);
 			EnhancedInputComponent->BindAction(InputDataAsset->ZoomInAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::ZoomInCompleted);
 			EnhancedInputComponent->BindAction(InputDataAsset->InteractionAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::Interact);
+			EnhancedInputComponent->BindAction(InputDataAsset->WeaponChangeAction1, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ChangeWeapon1);
+			EnhancedInputComponent->BindAction(InputDataAsset->WeaponChangeAction2, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ChangeWeapon2);
+			EnhancedInputComponent->BindAction(InputDataAsset->WeaponChangeAction3, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ChangeWeapon3);
+			EnhancedInputComponent->BindAction(InputDataAsset->WeaponChangeAction4, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ChangeWeapon4);
+			EnhancedInputComponent->BindAction(InputDataAsset->MouseWheelAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ChangeWeaponMouseWheel);
 		}
 	}
 }

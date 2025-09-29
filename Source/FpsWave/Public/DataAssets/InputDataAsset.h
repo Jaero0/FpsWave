@@ -38,4 +38,19 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Input Asset")
 	TObjectPtr<class UInputAction> InteractionAction;
+
+	UPROPERTY(EditAnywhere, Category="Input Asset")
+	TObjectPtr<class UInputAction> WeaponChangeAction1;
+
+	UPROPERTY(EditAnywhere, Category="Input Asset")
+	TObjectPtr<class UInputAction> WeaponChangeAction2;
+
+	UPROPERTY(EditAnywhere, Category="Input Asset")
+	TObjectPtr<class UInputAction> WeaponChangeAction3;
+
+	UPROPERTY(EditAnywhere, Category="Input Asset")
+	TObjectPtr<class UInputAction> WeaponChangeAction4;
+	
+	UPROPERTY(EditAnywhere, Category="Input Asset")
+	TObjectPtr<class UInputAction> MouseWheelAction;
 };

@@ -86,7 +86,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	void ChangeCapsuleSizeCrouch(EMoveState MoveState);
-	void Interact();
 
 protected:
 	// Called when the game starts or when spawned
@@ -142,6 +141,13 @@ private:
 	TObjectPtr<class AFpsWaveWeapon> EquippedWeapon;
 	UPROPERTY(VisibleAnywhere)
 	EOverlapDetected OverlapDetectedType = EOverlapDetected::EOD_None;
+	EPlayerEquipType EquipType = EPlayerEquipType::EPE_Gun;
+
+	void Interact();
+
+	void ChangeWeapon_Key(int key);
+	int WeaponIndex = 1;
+	void ChangeWeapon_MouseWheel(int input);
 
 public:
 	FORCEINLINE
@@ -221,4 +227,7 @@ public:
 	{
 		this->OverlapDetectedType = DetectedType;
 	}
+
+	UFUNCTION(BlueprintPure)
+	EPlayerEquipType GetPlayerEquipType() const;
 };

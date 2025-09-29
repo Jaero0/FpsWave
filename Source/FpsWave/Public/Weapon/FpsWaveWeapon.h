@@ -48,5 +48,11 @@ public:
 	{
 		return ItemMesh;
 	}
+	
+	FORCEINLINE
+	TObjectPtr<class UBoxComponent> GetBoxComponent()
+	{
+		return BoxComponent;
+	}
 
 };

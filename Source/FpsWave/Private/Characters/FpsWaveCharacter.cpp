@@ -4,6 +4,7 @@
 #include "FpsWave/Public/Characters/FpsWaveCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Controllers/FpsWaveCharacterController.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -72,20 +73,28 @@ void AFpsWaveCharacter::BeginPlay()
 		Cont->OnTpsFpsTypeChangedDelegate.BindUObject(this, &AFpsWaveCharacter::OnChangePointOfViewType);
 		Cont->OnFreeCameraStartedDelegate.BindUObject(this, &AFpsWaveCharacter::OnFreeCameraStarted);
 		Cont->OnFreeCameraCompletedDelegate.BindUObject(this, &AFpsWaveCharacter::OnFreeCameraCompleted);
+		Cont->OnInteractionDelegate.BindUObject(this, &AFpsWaveCharacter::Interact);
+		Cont->OnWeaponChange_Key_Delegate.BindUObject(this, &AFpsWaveCharacter::ChangeWeapon_Key);
+		Cont->OnWeaponChange_MouseWheel_Delegate.BindUObject(this, &AFpsWaveCharacter::ChangeWeapon_MouseWheel);
 
 		GetMesh()->HideBoneByName(FName("weapon_r"), PBO_None);
 		GetMesh()->HideBoneByName(FName("weapon_l"), PBO_None);
 	}
 
-	//todo , 소켓에 부착되게하기
+	//todo, 시작무기 = Rifle, 장착 시 Collision overlap 해제
 	WeaponInventory.AttachedRifle = GetWorld()->SpawnActor<AGun>(WeaponInventory.GetDefaultWeapon().GetDefaultRifle(), FVector::Zero(), FRotator::ZeroRotator);
+	WeaponInventory.AttachedRifle->GetBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponInventory.AttachedShotgun = GetWorld()->SpawnActor<AGun>(WeaponInventory.GetDefaultWeapon().GetDefaultShotgun(), FVector::Zero(), FRotator::ZeroRotator);
+	WeaponInventory.AttachedShotgun->GetBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponInventory.AttachedKatana = GetWorld()->SpawnActor<AMelee>(WeaponInventory.GetDefaultWeapon().GetDefaultKatana(), FVector::Zero(), FRotator::ZeroRotator);
+	WeaponInventory.AttachedKatana->GetBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponInventory.AttachedHammer = GetWorld()->SpawnActor<AMelee>(WeaponInventory.GetDefaultWeapon().GetDefaultHammer(), FVector::Zero(), FRotator::ZeroRotator);
+	WeaponInventory.AttachedHammer->GetBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	EquippedWeapon = WeaponInventory.AttachedRifle;
 	FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
 	EquippedWeapon->AttachToComponent(GetMesh(), Rules, FName("rightHandGunSocket"));
+	EquipType = EPlayerEquipType::EPE_Gun;
 }
 
 void AFpsWaveCharacter::HideHeadBone()
@@ -134,6 +143,11 @@ void AFpsWaveCharacter::OnFreeCameraCompleted()
 	FpsCrouchSpringArm->bUsePawnControlRotation = true;
 }
 
+EPlayerEquipType AFpsWaveCharacter::GetPlayerEquipType() const
+{
+	return EquipType;
+}
+
 // Called every frame
 void AFpsWaveCharacter::Tick(float DeltaTime)
 {
@@ -175,7 +189,7 @@ void AFpsWaveCharacter::Interact()
 
 		if (!DetectedWeapon) return;
 		//감지된 무기 장착
-		//todo 교체시 아이템교체
+		//todo 교체시 아이템교체, set collision enabled 해제
 		if (DetectedWeapon.IsA(AGun::StaticClass()))
 		{
 			AGun* Gun = Cast<AGun>(DetectedWeapon);
@@ -190,6 +204,8 @@ void AFpsWaveCharacter::Interact()
 			{
 				WeaponInventory.AttachedShotgun = Gun;
 			}
+
+			EquipType = EPlayerEquipType::EPE_Gun;
 		}
 		else if (DetectedWeapon.IsA(AMelee::StaticClass()))
 		{
@@ -204,12 +220,115 @@ void AFpsWaveCharacter::Interact()
 			{
 				WeaponInventory.AttachedHammer = Melee;
 			}
+
+			EquipType = EPlayerEquipType::EPE_Melee;
 		}
 		
 		DetectedWeapon = nullptr;
 		OverlapDetectedType = EOverlapDetected::EOD_None;
 		break;
 	}
+}
+
+void AFpsWaveCharacter::ChangeWeapon_Key(int key)
+{
+	if (EquippedWeapon && EquippedWeapon->IsValidLowLevel())
+	{
+		EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		EquippedWeapon->SetActorHiddenInGame(true);
+	}
+	
+	FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
+	
+	if (key == 1 || key == 2)
+	{
+		if (key == 1)
+		{
+			EquippedWeapon = WeaponInventory.AttachedRifle;
+			EquippedWeapon->AttachToComponent(GetMesh(), Rules, FName("rightHandGunSocket"));
+		}
+		else if (key == 2)
+		{
+			EquippedWeapon = WeaponInventory.AttachedShotgun;
+			EquippedWeapon->AttachToComponent(GetMesh(), Rules, FName("rightHandGunSocket"));
+		}
+		
+		EquipType = EPlayerEquipType::EPE_Gun;
+	}
+	else if (key == 3 || key == 4)
+	{
+		if (key == 3)
+		{
+			EquippedWeapon = WeaponInventory.AttachedKatana;
+			EquippedWeapon->AttachToComponent(GetMesh(), Rules, FName("rightHandMeleeSocket"));
+		}
+		else if (key == 4)
+		{
+			EquippedWeapon = WeaponInventory.AttachedHammer;
+			EquippedWeapon->AttachToComponent(GetMesh(), Rules, FName("rightHandMeleeSocket"));
+		}
+		
+		EquipType = EPlayerEquipType::EPE_Melee;
+	}
+
+	EquippedWeapon->SetActorHiddenInGame(false);
+}
+
+void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
+{
+	WeaponIndex += input;
+
+	if (WeaponIndex == 0)
+	{
+		WeaponIndex = 4;
+	}
+
+	if (WeaponIndex == 5)
+	{
+		WeaponIndex = 1;
+	}
+
+	if (EquippedWeapon && EquippedWeapon->IsValidLowLevel())
+	{
+		EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		EquippedWeapon->SetActorHiddenInGame(true);
+	}
+	
+	if (WeaponIndex == 1 || WeaponIndex == 2)
+	{
+		if (WeaponIndex == 1)
+		{
+			EquippedWeapon = WeaponInventory.AttachedRifle;
+			FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
+			EquippedWeapon->AttachToComponent(GetMesh(), Rules, FName("rightHandGunSocket"));
+		}
+		else if (WeaponIndex == 2)
+		{
+			EquippedWeapon = WeaponInventory.AttachedShotgun;
+			FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
+			EquippedWeapon->AttachToComponent(GetMesh(), Rules, FName("rightHandGunSocket"));
+		}
+		
+		EquipType = EPlayerEquipType::EPE_Gun;
+	}
+	else if (WeaponIndex == 3 || WeaponIndex == 4)
+	{
+		if (WeaponIndex == 3)
+		{
+			EquippedWeapon = WeaponInventory.AttachedKatana;
+			FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
+			EquippedWeapon->AttachToComponent(GetMesh(), Rules, FName("rightHandMeleeSocket"));
+		}
+		else if (WeaponIndex == 4)
+		{
+			EquippedWeapon = WeaponInventory.AttachedHammer;
+			EquippedWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("rightHandMeleeSocket"));
+		}
+		
+		EquipType = EPlayerEquipType::EPE_Melee;
+	}
+
+	EquippedWeapon->SetActorHiddenInGame(false);
 }
 
 

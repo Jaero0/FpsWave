@@ -31,3 +31,20 @@ enum class EOverlapDetected : uint8
 	EOD_None UMETA(DisplayName=None),
 	EOD_Weapon UMETA(DisplayName=Weapon)
 };
+
+UENUM(BlueprintType)
+enum class EPlayerEquipType : uint8
+{
+	EPE_Gun UMETA(DisplayName=Gun),
+	EPE_Melee UMETA(DisplayName=Melee)
+};
+
+UENUM(BlueprintType)
+enum class EWeaponSlot : uint8
+{
+	Rifle = 0,
+	Shotgun = 1,
+	Katana = 2,
+	Hammer = 3,
+	MAX UMETA(Hidden)
+};

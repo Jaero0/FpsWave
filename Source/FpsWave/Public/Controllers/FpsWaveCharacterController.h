@@ -13,6 +13,9 @@ struct FInputActionValue;
 DECLARE_DELEGATE(OnTpsFpsTypeChangedDelegate)
 DECLARE_DELEGATE(OnFreeCameraStartedDelegate)
 DECLARE_DELEGATE(OnFreeCameraCompletedDelegate)
+DECLARE_DELEGATE(OnInteractionDelegate)
+DECLARE_DELEGATE_OneParam(OnWeaponChange_Key_Delegate, int)
+DECLARE_DELEGATE_OneParam(OnWeaponChange_MouseWheel_Delegate, int)
 
 /**
  * 
@@ -31,6 +34,9 @@ public:
 	OnTpsFpsTypeChangedDelegate OnTpsFpsTypeChangedDelegate;
 	OnFreeCameraStartedDelegate OnFreeCameraStartedDelegate;
 	OnFreeCameraCompletedDelegate OnFreeCameraCompletedDelegate;
+	OnInteractionDelegate OnInteractionDelegate;
+	OnWeaponChange_Key_Delegate OnWeaponChange_Key_Delegate;
+	OnWeaponChange_MouseWheel_Delegate OnWeaponChange_MouseWheel_Delegate;
 
 protected:
 	virtual void BeginPlay() override;
@@ -97,6 +103,12 @@ private:
 	TSubclassOf<UUserWidget> WidgetClass;
 
 	void Interact();
+
+	void ChangeWeapon1();
+	void ChangeWeapon2();
+	void ChangeWeapon3();
+	void ChangeWeapon4();
+	void ChangeWeaponMouseWheel(const FInputActionValue &InputActionValue);
 
 public:
 	FORCEINLINE
