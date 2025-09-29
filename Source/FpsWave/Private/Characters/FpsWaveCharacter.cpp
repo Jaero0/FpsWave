@@ -86,7 +86,6 @@ void AFpsWaveCharacter::BeginPlay()
 	EquippedWeapon = WeaponInventory.AttachedRifle;
 	FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
 	EquippedWeapon->AttachToComponent(GetMesh(), Rules, FName("rightHandGunSocket"));
-	EquippedWeapon->GetItemMesh()->SetActive(false);
 }
 
 void AFpsWaveCharacter::HideHeadBone()
@@ -180,6 +179,7 @@ void AFpsWaveCharacter::Interact()
 		if (DetectedWeapon.IsA(AGun::StaticClass()))
 		{
 			AGun* Gun = Cast<AGun>(DetectedWeapon);
+			//
 			Gun->GetItemMesh()->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("rightHandGunSocket"));
 			
 			if (Gun->ActorHasTag(FName("Rifle")))
@@ -207,6 +207,7 @@ void AFpsWaveCharacter::Interact()
 		}
 		
 		DetectedWeapon = nullptr;
+		OverlapDetectedType = EOverlapDetected::EOD_None;
 		break;
 	}
 }

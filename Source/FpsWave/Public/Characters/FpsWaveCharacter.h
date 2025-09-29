@@ -134,12 +134,13 @@ private:
 
 #pragma endregion
 
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class AFpsWaveWeapon> DetectedWeapon;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess="true"))
 	FWeaponInventory WeaponInventory;
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class AFpsWaveWeapon> EquippedWeapon;
-
+	UPROPERTY(VisibleAnywhere)
 	EOverlapDetected OverlapDetectedType = EOverlapDetected::EOD_None;
 
 public:

@@ -18,8 +18,8 @@ AFpsWaveWeapon::AFpsWaveWeapon()
 	BoxComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	BoxComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	BoxComponent->SetGenerateOverlapEvents(true);
-	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AFpsWaveWeapon::OnCapsuleOverlap);
-	BoxComponent->OnComponentEndOverlap.AddDynamic(this, &AFpsWaveWeapon::OnCapsuleOverlapEnd);
+	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AFpsWaveWeapon::OnBeginOverlap);
+	BoxComponent->OnComponentEndOverlap.AddDynamic(this, &AFpsWaveWeapon::OnOverlapEnd);
 	
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	ItemMesh->SetupAttachment(BoxComponent);
@@ -39,14 +39,14 @@ void AFpsWaveWeapon::Tick(float DeltaTime)
 
 }
 
-void AFpsWaveWeapon::OnCapsuleOverlap(UPrimitiveComponent* OverlappedComponent,
+void AFpsWaveWeapon::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 										 AActor* OtherActor,
 										 UPrimitiveComponent* OtherComp,
 										 int32 OtherBodyIndex,
 										 bool bFromSweep,
 										 const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(OtherActor->GetActorLocation().ToString()));
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(this->GetName()));
 
 	if (AFpsWaveCharacter* CurrentPlayer = Cast<AFpsWaveCharacter>(OtherActor))
 	{
@@ -55,15 +55,15 @@ void AFpsWaveWeapon::OnCapsuleOverlap(UPrimitiveComponent* OverlappedComponent,
 	}
 }
 
-void AFpsWaveWeapon::OnCapsuleOverlapEnd(UPrimitiveComponent* OverlappedComponent,
+void AFpsWaveWeapon::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
 	AActor* OtherActor,
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex)
 {
 	if (AFpsWaveCharacter* CurrentPlayer = Cast<AFpsWaveCharacter>(OtherActor))
 	{
-		Player->SetOverlapDetectedType(EOverlapDetected::EOD_Weapon);
-		Player->SetDetectedWeapon(nullptr);
+		CurrentPlayer->SetOverlapDetectedType(EOverlapDetected::EOD_None);
+		CurrentPlayer->SetDetectedWeapon(nullptr);
 	}
 }
 

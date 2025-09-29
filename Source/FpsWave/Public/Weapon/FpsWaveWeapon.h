@@ -17,17 +17,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
-private:
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<class UBoxComponent> BoxComponent;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<class UStaticMeshComponent> ItemMesh;
-	
-	TObjectPtr<class AFpsWaveCharacter> Player;
 	
 	UFUNCTION()
-	void OnCapsuleOverlap(
+	virtual void OnBeginOverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
@@ -37,12 +29,18 @@ private:
 	);
 	
 	UFUNCTION()
-	void OnCapsuleOverlapEnd(
+	virtual void OnOverlapEnd(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex
 	);
+
+private:
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<class UBoxComponent> BoxComponent;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<class UStaticMeshComponent> ItemMesh;
 
 public:	
 	FORCEINLINE
