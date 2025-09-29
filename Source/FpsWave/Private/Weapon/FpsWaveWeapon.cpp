@@ -18,8 +18,6 @@ AFpsWaveWeapon::AFpsWaveWeapon()
 	BoxComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	BoxComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	BoxComponent->SetGenerateOverlapEvents(true);
-	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AFpsWaveWeapon::OnBeginOverlap);
-	BoxComponent->OnComponentEndOverlap.AddDynamic(this, &AFpsWaveWeapon::OnOverlapEnd);
 	
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	ItemMesh->SetupAttachment(BoxComponent);
@@ -29,7 +27,9 @@ AFpsWaveWeapon::AFpsWaveWeapon()
 void AFpsWaveWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AFpsWaveWeapon::OnBeginOverlap);
+	BoxComponent->OnComponentEndOverlap.AddDynamic(this, &AFpsWaveWeapon::OnOverlapEnd);
 }
 
 // Called every frame
