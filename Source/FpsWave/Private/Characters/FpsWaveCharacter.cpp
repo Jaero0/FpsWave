@@ -228,69 +228,92 @@ void AFpsWaveCharacter::Interact()
 			EquippedWeapon = Melee;
 			EquipType = EPlayerEquipType::EPE_Melee;
 		}
+
+		if (SwapWeaponMontage)
+		{
+			GetMesh()->GetAnimInstance()->Montage_Play(SwapWeaponMontage);
+		}
 		
 		DetectedWeapon = nullptr;
 		OverlapDetectedType = EOverlapDetected::EOD_None;
 		break;
 	}
 
-	if (SwapWeaponMontage)
-	{
-		GetMesh()->GetAnimInstance()->Montage_Play(SwapWeaponMontage);
-	}
+	
 }
 
 void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 {
-	if (EquippedWeapon && EquippedWeapon->IsValidLowLevel())
-	{
-		EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		EquippedWeapon->SetActorHiddenInGame(true);
-	}
-	
-	FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
-	
+	// 새로 장착할 무기와 현재 무기가 같은지 미리 확인
+	AFpsWaveWeapon* NewWeapon = nullptr;
+	FName SocketName;
+	EPlayerEquipType NewEquipType;
+    
+	// 키에 따른 새 무기 결정
 	if (key == 1 || key == 2)
 	{
 		if (key == 1)
 		{
-			EquippedWeapon = WeaponInventory.AttachedRifle;
-			EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, FName("rightHandGunSocket"));
+			NewWeapon = WeaponInventory.AttachedRifle;
 		}
 		else if (key == 2)
 		{
-			EquippedWeapon = WeaponInventory.AttachedShotgun;
-			EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, FName("rightHandGunSocket"));
+			NewWeapon = WeaponInventory.AttachedShotgun;
 		}
-		
-		EquipType = EPlayerEquipType::EPE_Gun;
+		SocketName = FName("rightHandGunSocket");
+		NewEquipType = EPlayerEquipType::EPE_Gun;
 	}
 	else if (key == 3 || key == 4)
 	{
 		if (key == 3)
 		{
-			EquippedWeapon = WeaponInventory.AttachedKatana;
-			EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, FName("rightHandMeleeSocket"));
+			NewWeapon = WeaponInventory.AttachedKatana;
 		}
 		else if (key == 4)
 		{
-			EquippedWeapon = WeaponInventory.AttachedHammer;
-			EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, FName("rightHandMeleeSocket"));
+			NewWeapon = WeaponInventory.AttachedHammer;
 		}
-		
-		EquipType = EPlayerEquipType::EPE_Melee;
+		SocketName = FName("rightHandMeleeSocket");
+		NewEquipType = EPlayerEquipType::EPE_Melee;
 	}
-
+    
+	// 이미 같은 무기가 장착되어 있으면 아무것도 하지 않음
+	if (EquippedWeapon == NewWeapon)
+	{
+		return;
+	}
+    
+	// 유효한 새 무기가 없으면 함수 종료
+	if (!NewWeapon || !NewWeapon->IsValidLowLevel())
+	{
+		return;
+	}
+    
+	// 애니메이션 재생 (무기 교체 전)
 	if (SwapWeaponMontage)
 	{
 		GetMesh()->GetAnimInstance()->Montage_Play(SwapWeaponMontage);
 	}
+    
+	// 기존 무기 해제
+	if (EquippedWeapon && EquippedWeapon->IsValidLowLevel())
+	{
+		EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		EquippedWeapon->SetActorHiddenInGame(true);
+	}
+    
+	// 새 무기 장착
+	FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
+	EquippedWeapon = NewWeapon;
 	EquippedWeapon->SetActorHiddenInGame(false);
+	EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, SocketName);
+	EquipType = NewEquipType;
 }
+
 
 void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
 {
-	WeaponIndex += input;
+	WeaponIndex -= input;
 
 	if (WeaponIndex == 0)
 	{
