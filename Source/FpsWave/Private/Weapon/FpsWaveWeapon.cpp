@@ -20,7 +20,7 @@ AFpsWaveWeapon::AFpsWaveWeapon()
 	BoxComponent->SetGenerateOverlapEvents(true);
 	
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
-	ItemMesh->SetupAttachment(BoxComponent);
+	ItemMesh->SetupAttachment(GetRootComponent());
 }
 
 // Called when the game starts or when spawned
@@ -40,6 +40,10 @@ void AFpsWaveWeapon::Tick(float DeltaTime)
 }
 
 void AFpsWaveWeapon::Attack()
+{
+}
+
+void AFpsWaveWeapon::AttackFinished()
 {
 }
 

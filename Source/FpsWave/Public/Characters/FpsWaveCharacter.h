@@ -151,6 +151,7 @@ private:
 	int WeaponIndex = 1;
 	void ChangeWeapon_MouseWheel(int input);
 
+	EAttackState PlayerAttackState = EAttackState::EAS_None;
 	void Attack();
 	void AttackFinished();
 
@@ -235,4 +236,7 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	EPlayerEquipType GetPlayerEquipType() const;
+
+	UFUNCTION(BlueprintPure)
+	EAttackState GetPlayerAttackState() const;
 };

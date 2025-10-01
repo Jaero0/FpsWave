@@ -40,11 +40,9 @@ enum class EPlayerEquipType : uint8
 };
 
 UENUM(BlueprintType)
-enum class EWeaponSlot : uint8
+enum class EAttackState : uint8
 {
-	Rifle = 0,
-	Shotgun = 1,
-	Katana = 2,
-	Hammer = 3,
+	EAS_None UMETA(DisplayName=None),
+	EAS_Attack UMETA(DisplayName=Attack),
 	MAX UMETA(Hidden)
 };

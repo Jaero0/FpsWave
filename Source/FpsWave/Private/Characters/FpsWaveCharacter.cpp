@@ -150,6 +150,11 @@ EPlayerEquipType AFpsWaveCharacter::GetPlayerEquipType() const
 	return EquipType;
 }
 
+EAttackState AFpsWaveCharacter::GetPlayerAttackState() const
+{
+	return PlayerAttackState;
+}
+
 // Called every frame
 void AFpsWaveCharacter::Tick(float DeltaTime)
 {
@@ -378,11 +383,17 @@ void AFpsWaveCharacter::Attack()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->Attack();
+		PlayerAttackState = EAttackState::EAS_Attack;
 	}
 }
 
 void AFpsWaveCharacter::AttackFinished()
 {
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttackFinished();
+		PlayerAttackState = EAttackState::EAS_None;
+	}
 }
 
 

@@ -22,12 +22,22 @@ protected:
 	virtual void BeginPlay() override;
 	
 	virtual void Attack() override;
+	void StartAutoFire();
+	void FireSingleBullet();
+	virtual void AttackFinished() override; 
 
 
 private:
-	FVector ProjectileLocation;
-
-	TObjectPtr<AActor> Bullet;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<class USceneComponent> FirePoint;
+	FTimerHandle AttackTimer;
+	bool bIsFiring;
+	float ReloadSpeed;
+	int MaxBulletCount;
+	int CurrentBulletCount;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ABullet> Bullet;
 
 public:
 	

@@ -500,7 +500,7 @@ void AFpsWaveCharacterController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(InputDataAsset->WeaponChangeAction3, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ChangeWeapon3);
 			EnhancedInputComponent->BindAction(InputDataAsset->WeaponChangeAction4, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ChangeWeapon4);
 			EnhancedInputComponent->BindAction(InputDataAsset->MouseWheelAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ChangeWeaponMouseWheel);
-			EnhancedInputComponent->BindAction(InputDataAsset->AttackAction, ETriggerEvent::Triggered, this, &AFpsWaveCharacterController::Attack);
+			EnhancedInputComponent->BindAction(InputDataAsset->AttackAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::Attack);
 			EnhancedInputComponent->BindAction(InputDataAsset->AttackAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::AttackFinished);
 		}
 	}
