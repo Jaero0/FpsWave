@@ -53,4 +53,7 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category="Input Asset")
 	TObjectPtr<class UInputAction> MouseWheelAction;
+
+	UPROPERTY(EditAnywhere, Category="Input Asset")
+	TObjectPtr<class UInputAction> AttackAction;
 };

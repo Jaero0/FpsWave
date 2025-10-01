@@ -14,6 +14,8 @@ class FPSWAVE_API AFpsWaveWeapon : public AActor
 public:	
 	AFpsWaveWeapon();
 	virtual void Tick(float DeltaTime) override;
+	
+	virtual void Attack();
 
 protected:
 	virtual void BeginPlay() override;
@@ -35,6 +37,8 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex
 	);
+
+	float AttackDelay;
 
 private:
 	UPROPERTY(EditAnywhere)

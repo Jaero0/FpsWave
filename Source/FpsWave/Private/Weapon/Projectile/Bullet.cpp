@@ -1,36 +1,25 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Weapon/Gun/Gun.h"
+#include "Weapon/Projectile/Bullet.h"
 
 
 // Sets default values
-AGun::AGun()
+ABullet::ABullet()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	AttackDelay = 0.5f;
-
-	ProjectileLocation = GetItemMesh()->GetSocketLocation(FName("firePointSocket"));
 }
 
 // Called when the game starts or when spawned
-void AGun::BeginPlay()
+void ABullet::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-void AGun::Attack()
-{
-	Super::Attack();
-
-	
-}
-
 // Called every frame
-void AGun::Tick(float DeltaTime)
+void ABullet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }

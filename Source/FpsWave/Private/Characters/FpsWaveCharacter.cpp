@@ -76,6 +76,8 @@ void AFpsWaveCharacter::BeginPlay()
 		Cont->OnInteractionDelegate.BindUObject(this, &AFpsWaveCharacter::Interact);
 		Cont->OnWeaponChange_Key_Delegate.BindUObject(this, &AFpsWaveCharacter::ChangeWeapon_Key);
 		Cont->OnWeaponChange_MouseWheel_Delegate.BindUObject(this, &AFpsWaveCharacter::ChangeWeapon_MouseWheel);
+		Cont->OnAttackDelegate.BindUObject(this, &AFpsWaveCharacter::Attack);
+		Cont->OnAttackFinishedDelegate.BindUObject(this, &AFpsWaveCharacter::AttackFinished);
 
 		GetMesh()->HideBoneByName(FName("weapon_r"), PBO_None);
 		GetMesh()->HideBoneByName(FName("weapon_l"), PBO_None);
@@ -310,7 +312,6 @@ void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 	EquipType = NewEquipType;
 }
 
-
 void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
 {
 	WeaponIndex -= input;
@@ -370,6 +371,18 @@ void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
 		GetMesh()->GetAnimInstance()->Montage_Play(SwapWeaponMontage);
 	}
 	EquippedWeapon->SetActorHiddenInGame(false);
+}
+
+void AFpsWaveCharacter::Attack()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->Attack();
+	}
+}
+
+void AFpsWaveCharacter::AttackFinished()
+{
 }
 
 

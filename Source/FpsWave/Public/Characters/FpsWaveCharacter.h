@@ -151,6 +151,9 @@ private:
 	int WeaponIndex = 1;
 	void ChangeWeapon_MouseWheel(int input);
 
+	void Attack();
+	void AttackFinished();
+
 public:
 	FORCEINLINE
 	TObjectPtr<class USpringArmComponent> GetTpsSpringArm()

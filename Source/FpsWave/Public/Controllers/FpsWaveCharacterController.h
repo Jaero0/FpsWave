@@ -16,7 +16,8 @@ DECLARE_DELEGATE(OnFreeCameraCompletedDelegate)
 DECLARE_DELEGATE(OnInteractionDelegate)
 DECLARE_DELEGATE_OneParam(OnWeaponChange_Key_Delegate, int)
 DECLARE_DELEGATE_OneParam(OnWeaponChange_MouseWheel_Delegate, int)
-
+DECLARE_DELEGATE(OnAttackDelegate)
+DECLARE_DELEGATE(OnAttackFinishedDelegate)
 /**
  * 
  */
@@ -37,6 +38,8 @@ public:
 	OnInteractionDelegate OnInteractionDelegate;
 	OnWeaponChange_Key_Delegate OnWeaponChange_Key_Delegate;
 	OnWeaponChange_MouseWheel_Delegate OnWeaponChange_MouseWheel_Delegate;
+	OnAttackDelegate OnAttackDelegate;
+	OnAttackFinishedDelegate OnAttackFinishedDelegate;
 
 protected:
 	virtual void BeginPlay() override;
@@ -109,6 +112,9 @@ private:
 	void ChangeWeapon3();
 	void ChangeWeapon4();
 	void ChangeWeaponMouseWheel(const FInputActionValue &InputActionValue);
+
+	void Attack();
+	void AttackFinished();
 
 public:
 	FORCEINLINE

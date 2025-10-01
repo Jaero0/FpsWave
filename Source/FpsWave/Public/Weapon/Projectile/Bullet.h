@@ -4,34 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Weapon/FpsWaveWeapon.h"
-#include "Weapon/ShootableInterface.h"
-#include "Gun.generated.h"
+#include "Bullet.generated.h"
 
 UCLASS()
-class FPSWAVE_API AGun : public AFpsWaveWeapon, public IShootableInterface
+class FPSWAVE_API ABullet : public AActor
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this actor's properties
-	AGun();
+	ABullet();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
-	virtual void Attack() override;
-
-
-private:
-	FVector ProjectileLocation;
-
-	TObjectPtr<AActor> Bullet;
 
 public:
-	
-
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 };
