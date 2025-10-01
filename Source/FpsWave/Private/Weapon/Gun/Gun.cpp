@@ -4,6 +4,7 @@
 #include "Weapon/Gun/Gun.h"
 
 #include "Components/CapsuleComponent.h"
+#include "Controllers/FpsWaveCharacterController.h"
 #include "Weapon/Projectile/Bullet.h"
 
 
@@ -61,20 +62,11 @@ void AGun::StartAutoFire()
 void AGun::FireSingleBullet()
 {
 	//todo 총알발사소리, 총알 발사 지점 scenecomponent로 변경하기, projectile movement 사용
-	FVector MuzzleLocation = FirePoint->GetComponentLocation();
-	FRotator MuzzleRotation = FirePoint->GetComponentRotation();
 
-	// 총알 스폰 및 발사
-	ABullet* SpawnedBullet = GetWorld()->SpawnActor<ABullet>(Bullet, MuzzleLocation, MuzzleRotation);
-    
-	if (SpawnedBullet && SpawnedBullet->GetCapsuleComponent())
-	{
-		FVector FireDirection = MuzzleRotation.RotateVector(FVector::ForwardVector);
-		SpawnedBullet->GetCapsuleComponent()->AddImpulse(FireDirection * 10000.0f, NAME_None, true);
-	}
-
-	DrawDebugSphere(GetWorld(), MuzzleLocation, 10.0f, 12, FColor::Red, false, 2.0f);
-
+	auto GameViewportClient = GetWorld()->GetGameViewport();
+	FVector2d ViewPort;
+	GameViewportClient->GetViewportSize(ViewPort);
+	FVector2D Crosshair;
 }
 
 

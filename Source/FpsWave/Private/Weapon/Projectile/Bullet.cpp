@@ -36,6 +36,8 @@ void ABullet::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 {
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *FString(OtherActor->GetName()));
 
+	DrawDebugSphere(GetWorld(), this->GetActorLocation(), 10.f, 12, FColor::Green, false, 2.f);
+	
 	//todo 부딪힐때 탄환 박히는 소리 재생
 	this->Destroy();
 }
