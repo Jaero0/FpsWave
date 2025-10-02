@@ -394,7 +394,6 @@ void AFpsWaveCharacter::Attack()
 {
 	if (EquippedWeapon)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("asdasds"));
 		EquippedWeapon->Attack();
 		PlayerAttackState = EAttackState::EAS_Attack;
 	}

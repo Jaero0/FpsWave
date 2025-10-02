@@ -5,6 +5,8 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Controllers/FpsWaveCharacterController.h"
+#include "HUD/Crosshair.h"
 
 
 // Sets default values
@@ -71,10 +73,9 @@ void AGun::FireSingleBullet()
 			EAttachLocation::SnapToTargetIncludingScale,
 			true);
 	}
-
-	auto GameViewportClient = GetWorld()->GetGameViewport();
+	
 	FVector2D ViewPort;
-	GameViewportClient->GetViewportSize(ViewPort);
+	GetWorld()->GetGameViewport()->GetViewportSize(ViewPort);
 
 	// 화면 중앙 좌표 (Crosshair)
 	FVector2D CrosshairLocation(ViewPort.X / 2.f, ViewPort.Y / 2.f);

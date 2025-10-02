@@ -23,6 +23,8 @@ protected:
 	TObjectPtr<class UBorder> Left;
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<class UBorder> Right;
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UBorder> Aim;
 
 	FVector2d DefaultTopLocation;
 	FVector2d DefaultBottomLocation;
@@ -54,4 +56,5 @@ private:
 	void ResetAimWidth();
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
+
 };
