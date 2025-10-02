@@ -62,11 +62,8 @@ AFpsWaveCharacter::AFpsWaveCharacter()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
 }
 
-// Called when the game starts or when spawned
-void AFpsWaveCharacter::BeginPlay()
+void AFpsWaveCharacter::BindDelegate()
 {
-	Super::BeginPlay();
-
 	if (auto Cont = Cast<AFpsWaveCharacterController>(GetWorld()->GetFirstPlayerController()))
 	{
 		FpsWaveController = Cont;
@@ -76,13 +73,23 @@ void AFpsWaveCharacter::BeginPlay()
 		Cont->OnInteractionDelegate.BindUObject(this, &AFpsWaveCharacter::Interact);
 		Cont->OnWeaponChange_Key_Delegate.BindUObject(this, &AFpsWaveCharacter::ChangeWeapon_Key);
 		Cont->OnWeaponChange_MouseWheel_Delegate.BindUObject(this, &AFpsWaveCharacter::ChangeWeapon_MouseWheel);
-		Cont->OnAttackDelegate.BindUObject(this, &AFpsWaveCharacter::Attack);
-		Cont->OnAttackFinishedDelegate.BindUObject(this, &AFpsWaveCharacter::AttackFinished);
-
-		GetMesh()->HideBoneByName(FName("weapon_r"), PBO_None);
-		GetMesh()->HideBoneByName(FName("weapon_l"), PBO_None);
+		Cont->OnAttackDelegate.AddUObject(this, &AFpsWaveCharacter::Attack);
+		Cont->OnAttackFinishedDelegate.AddUObject(this, &AFpsWaveCharacter::AttackFinished);
 	}
+}
 
+// Called when the game starts or when spawned
+void AFpsWaveCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	//GetWorld()->GetTimerManager().SetTimer(DelegateTimer, this, &AFpsWaveCharacter::BindDelegate, 0.2f);
+
+	BindDelegate();
+	
+	GetMesh()->HideBoneByName(FName("weapon_r"), PBO_None);
+	GetMesh()->HideBoneByName(FName("weapon_l"), PBO_None);
+	
 	//todo, 시작무기 = Rifle, 장착 시 Collision overlap 해제
 	WeaponInventory.AttachedRifle = GetWorld()->SpawnActor<AGun>(WeaponInventory.GetDefaultWeapon().GetDefaultRifle());
 	WeaponInventory.AttachedRifle->GetBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -153,6 +160,11 @@ EPlayerEquipType AFpsWaveCharacter::GetPlayerEquipType() const
 EAttackState AFpsWaveCharacter::GetPlayerAttackState() const
 {
 	return PlayerAttackState;
+}
+
+TObjectPtr<AFpsWaveWeapon> AFpsWaveCharacter::GetEquippedWeapon()
+{
+	return EquippedWeapon;
 }
 
 // Called every frame
@@ -382,6 +394,7 @@ void AFpsWaveCharacter::Attack()
 {
 	if (EquippedWeapon)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("asdasds"));
 		EquippedWeapon->Attack();
 		PlayerAttackState = EAttackState::EAS_Attack;
 	}

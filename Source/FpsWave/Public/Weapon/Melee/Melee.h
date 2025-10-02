@@ -24,4 +24,6 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	//todo
+	virtual float GetAttackDelay() override;
 };

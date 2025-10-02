@@ -29,16 +29,26 @@ void AFpsWaveCharacterController::BeginPlay()
 
 	SetViewTarget(Player->GetTpsCameraChildActor()->GetChildActor());
 
-	if (WidgetClass)
+	PlayerCameraManager->ViewPitchMin = -60.f;
+	PlayerCameraManager->ViewPitchMax = 70.f;
+
+#pragma region init widget
+	if (ToggleWidget)
 	{
-		if (UUserWidget* UserWidget = CreateWidget<UUserWidget>(GetWorld(), WidgetClass))
+		if (UUserWidget* UserWidget = CreateWidget<UUserWidget>(GetWorld(), ToggleWidget))
 		{
 			UserWidget->AddToViewport();
 		}
 	}
 
-	PlayerCameraManager->ViewPitchMin = -60.f;
-	PlayerCameraManager->ViewPitchMax = 70.f;
+	if (CrosshairWidget)
+	{
+		if (UUserWidget* UserWidget = CreateWidget<UUserWidget>(GetWorld(), CrosshairWidget))
+		{
+			UserWidget->AddToViewport();
+		}
+	}
+#pragma endregion
 }
 
 void AFpsWaveCharacterController::Tick(float DeltaSeconds)
@@ -106,7 +116,7 @@ void AFpsWaveCharacterController::Attack()
 {
 	if (OnAttackDelegate.IsBound())
 	{
-		OnAttackDelegate.Execute();
+		OnAttackDelegate.Broadcast();
 	}
 }
 
@@ -114,7 +124,7 @@ void AFpsWaveCharacterController::AttackFinished()
 {
 	if (OnAttackFinishedDelegate.IsBound())
 	{
-		OnAttackFinishedDelegate.Execute();
+		OnAttackFinishedDelegate.Broadcast();
 	}
 }
 

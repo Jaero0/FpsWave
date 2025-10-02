@@ -59,5 +59,6 @@ public:
 	{
 		return BoxComponent;
 	}
-
+	
+	virtual float GetAttackDelay();
 };

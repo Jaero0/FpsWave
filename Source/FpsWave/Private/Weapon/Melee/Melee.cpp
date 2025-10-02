@@ -24,3 +24,9 @@ void AMelee::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+float AMelee::GetAttackDelay()
+{
+	return Super::GetAttackDelay();
+	//todo
+}
+

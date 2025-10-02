@@ -97,6 +97,8 @@ protected:
 	void OnFreeCameraCompleted();
 
 private:
+	FTimerHandle DelegateTimer;
+	void BindDelegate();
 	
 #pragma region Camera
 	TObjectPtr<class AFpsWaveCharacterController> FpsWaveController;
@@ -239,4 +241,6 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	EAttackState GetPlayerAttackState() const;
+
+	TObjectPtr<class AFpsWaveWeapon> GetEquippedWeapon();
 };

@@ -141,3 +141,8 @@ void AGun::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+float AGun::GetAttackDelay()
+{
+	return AttackDelay;
+}
+

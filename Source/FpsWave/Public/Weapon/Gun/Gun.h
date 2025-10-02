@@ -41,8 +41,8 @@ private:
 	TObjectPtr<class UParticleSystem> GunImpactParticles;
 
 public:
-	
-
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	virtual float GetAttackDelay() override;
+
 };

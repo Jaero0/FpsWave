@@ -10,14 +10,14 @@
 
 struct FInputActionValue;
 
-DECLARE_DELEGATE(OnTpsFpsTypeChangedDelegate)
-DECLARE_DELEGATE(OnFreeCameraStartedDelegate)
-DECLARE_DELEGATE(OnFreeCameraCompletedDelegate)
-DECLARE_DELEGATE(OnInteractionDelegate)
-DECLARE_DELEGATE_OneParam(OnWeaponChange_Key_Delegate, int)
-DECLARE_DELEGATE_OneParam(OnWeaponChange_MouseWheel_Delegate, int)
-DECLARE_DELEGATE(OnAttackDelegate)
-DECLARE_DELEGATE(OnAttackFinishedDelegate)
+DECLARE_DELEGATE(FOnTpsFpsTypeChangedDelegate)
+DECLARE_DELEGATE(FOnFreeCameraStartedDelegate)
+DECLARE_DELEGATE(FOnFreeCameraCompletedDelegate)
+DECLARE_DELEGATE(FOnInteractionDelegate)
+DECLARE_DELEGATE_OneParam(FOnWeaponChange_Key_Delegate, int)
+DECLARE_DELEGATE_OneParam(FOnWeaponChange_MouseWheel_Delegate, int)
+DECLARE_MULTICAST_DELEGATE(FOnAttackDelegate)
+DECLARE_MULTICAST_DELEGATE(FOnAttackFinishedDelegate)
 /**
  * 
  */
@@ -32,14 +32,14 @@ public:
 	UFUNCTION()
 	void OnChangeCrouchToggle(bool bIsChecked);
 	
-	OnTpsFpsTypeChangedDelegate OnTpsFpsTypeChangedDelegate;
-	OnFreeCameraStartedDelegate OnFreeCameraStartedDelegate;
-	OnFreeCameraCompletedDelegate OnFreeCameraCompletedDelegate;
-	OnInteractionDelegate OnInteractionDelegate;
-	OnWeaponChange_Key_Delegate OnWeaponChange_Key_Delegate;
-	OnWeaponChange_MouseWheel_Delegate OnWeaponChange_MouseWheel_Delegate;
-	OnAttackDelegate OnAttackDelegate;
-	OnAttackFinishedDelegate OnAttackFinishedDelegate;
+	FOnTpsFpsTypeChangedDelegate OnTpsFpsTypeChangedDelegate;
+	FOnFreeCameraStartedDelegate OnFreeCameraStartedDelegate;
+	FOnFreeCameraCompletedDelegate OnFreeCameraCompletedDelegate;
+	FOnInteractionDelegate OnInteractionDelegate;
+	FOnWeaponChange_Key_Delegate OnWeaponChange_Key_Delegate;
+	FOnWeaponChange_MouseWheel_Delegate OnWeaponChange_MouseWheel_Delegate;
+	FOnAttackDelegate OnAttackDelegate;
+	FOnAttackFinishedDelegate OnAttackFinishedDelegate;
 
 protected:
 	virtual void BeginPlay() override;
@@ -54,6 +54,11 @@ protected:
 	
 
 private:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> ToggleWidget;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> CrosshairWidget;
+	
 	TObjectPtr<class USpringArmComponent> GetCurrentSpringArm() const;
 	void Move(const FInputActionValue &InputActionValue);
 	void RunInputCompleted(const FInputActionValue &InputActionValue);
