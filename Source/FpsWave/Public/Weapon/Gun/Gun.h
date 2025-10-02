@@ -35,9 +35,10 @@ private:
 	float ReloadSpeed;
 	int MaxBulletCount;
 	int CurrentBulletCount;
-	
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<class ABullet> Bullet;
+	TObjectPtr<class UNiagaraSystem> GunFireParticles;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<class UParticleSystem> GunImpactParticles;
 
 public:
 	

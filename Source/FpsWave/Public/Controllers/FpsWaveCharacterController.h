@@ -101,10 +101,6 @@ private:
 	EMoveState PrevCharacterMoveState = EMoveState::EMS_Walk;
 	EPointOfViewType PointOfViewType = EPointOfViewType::EPT_ThirdPersonView;
 
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UUserWidget> WidgetClass;
-
 	void Interact();
 
 	void ChangeWeapon1();

@@ -3,9 +3,8 @@
 
 #include "Weapon/Gun/Gun.h"
 
-#include "Components/CapsuleComponent.h"
-#include "Controllers/FpsWaveCharacterController.h"
-#include "Weapon/Projectile/Bullet.h"
+#include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
 
 
 // Sets default values
@@ -20,7 +19,6 @@ AGun::AGun()
 	ReloadSpeed = 2.f;
 	MaxBulletCount = 30;
 	CurrentBulletCount = MaxBulletCount;
-	
 }
 
 // Called when the game starts or when spawned
@@ -63,10 +61,69 @@ void AGun::FireSingleBullet()
 {
 	//todo 총알발사소리, 총알 발사 지점 scenecomponent로 변경하기, projectile movement 사용
 
+	// 파티클 스폰
+	if (GunFireParticles)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAttached(GunFireParticles,
+			FirePoint, NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::SnapToTargetIncludingScale,
+			true);
+	}
+
 	auto GameViewportClient = GetWorld()->GetGameViewport();
-	FVector2d ViewPort;
+	FVector2D ViewPort;
 	GameViewportClient->GetViewportSize(ViewPort);
-	FVector2D Crosshair;
+
+	// 화면 중앙 좌표 (Crosshair)
+	FVector2D CrosshairLocation(ViewPort.X / 2.f, ViewPort.Y / 2.f);
+	CrosshairLocation.Y -= 50.f;
+
+	FVector CrosshairWorldPosition;
+	FVector CrosshairWorldDirection;
+
+	// 스크린 좌표 → 월드 좌표/방향 변환
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrosshairLocation,
+		CrosshairWorldPosition,
+		CrosshairWorldDirection
+	);
+
+	if (!bScreenToWorld) return;
+
+	// 카메라에서 쏘는 라인트레이스
+	FVector Start = CrosshairWorldPosition;
+	FVector End   = Start + CrosshairWorldDirection * 10000.f; // 사정거리
+
+	FHitResult CrosshairHit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	Params.AddIgnoredActor(GetOwner());
+
+	FVector BeamEndPoint = End; // 기본값 = 사정거리 끝점
+	if (GetWorld()->LineTraceSingleByChannel(CrosshairHit, Start, End, ECC_Visibility, Params))
+	{
+		BeamEndPoint = CrosshairHit.ImpactPoint;
+	}
+
+	// 총구에서 다시 라인트레이스
+	FHitResult WeaponTraceHit;
+	FVector WeaponTraceStart = FirePoint->GetComponentLocation();
+	FVector WeaponTraceEnd   = BeamEndPoint;
+
+	if (GetWorld()->LineTraceSingleByChannel(WeaponTraceHit, WeaponTraceStart, WeaponTraceEnd, ECC_Visibility, Params))
+	{
+		BeamEndPoint = WeaponTraceHit.ImpactPoint;
+	}
+
+	// 파티클 스폰
+	if (GunImpactParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GunImpactParticles, BeamEndPoint);
+	}
+
 }
 
 
