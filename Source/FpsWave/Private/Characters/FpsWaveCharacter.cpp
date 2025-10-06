@@ -3,17 +3,18 @@
 
 #include "FpsWave/Public/Characters/FpsWaveCharacter.h"
 
-#include "Camera/CameraComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Controllers/FpsWaveCharacterController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Weapon/FpsWaveWeapon.h"
 #include "Weapon/Gun/Gun.h"
+#include "Weapon/Gun/Rifle.h"
+#include "Weapon/Gun/Shotgun.h"
+#include "Weapon/Melee/Katana.h"
 #include "Weapon/Melee/Melee.h"
+#include "Weapon/Melee/WarHammer.h"
 
 
 // Sets default values
@@ -91,19 +92,20 @@ void AFpsWaveCharacter::BeginPlay()
 	GetMesh()->HideBoneByName(FName("weapon_l"), PBO_None);
 	
 	//todo, 시작무기 = Rifle, 장착 시 Collision overlap 해제
-	WeaponInventory.AttachedRifle = GetWorld()->SpawnActor<AGun>(WeaponInventory.GetDefaultWeapon().GetDefaultRifle());
+	WeaponInventory.AttachedRifle = GetWorld()->SpawnActor<ARifle>(WeaponInventory.GetDefaultWeapon().GetDefaultRifle());
 	WeaponInventory.AttachedRifle->GetBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WeaponInventory.AttachedShotgun = GetWorld()->SpawnActor<AGun>(WeaponInventory.GetDefaultWeapon().GetDefaultShotgun());
+	WeaponInventory.AttachedShotgun = GetWorld()->SpawnActor<AShotgun>(WeaponInventory.GetDefaultWeapon().GetDefaultShotgun());
 	WeaponInventory.AttachedShotgun->GetBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WeaponInventory.AttachedKatana = GetWorld()->SpawnActor<AMelee>(WeaponInventory.GetDefaultWeapon().GetDefaultKatana());
+	WeaponInventory.AttachedKatana = GetWorld()->SpawnActor<AKatana>(WeaponInventory.GetDefaultWeapon().GetDefaultKatana());
 	WeaponInventory.AttachedKatana->GetBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WeaponInventory.AttachedHammer = GetWorld()->SpawnActor<AMelee>(WeaponInventory.GetDefaultWeapon().GetDefaultHammer());
+	WeaponInventory.AttachedHammer = GetWorld()->SpawnActor<AWarHammer>(WeaponInventory.GetDefaultWeapon().GetDefaultHammer());
 	WeaponInventory.AttachedHammer->GetBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	EquippedWeapon = WeaponInventory.AttachedRifle;
 	EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("rightHandGunSocket"));
+	EquippedWeapon->OnTriggerMontage.AddDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
 
-	EquipType = EPlayerEquipType::EPE_Gun;
+	WeaponEquipType = EPlayerWeaponType::EPW_Rifle;
 }
 
 void AFpsWaveCharacter::HideHeadBone()
@@ -152,31 +154,10 @@ void AFpsWaveCharacter::OnFreeCameraCompleted()
 	FpsCrouchSpringArm->bUsePawnControlRotation = true;
 }
 
-EPlayerEquipType AFpsWaveCharacter::GetPlayerEquipType() const
-{
-	return EquipType;
-}
-
-EAttackState AFpsWaveCharacter::GetPlayerAttackState() const
-{
-	return PlayerAttackState;
-}
-
-TObjectPtr<AFpsWaveWeapon> AFpsWaveCharacter::GetEquippedWeapon()
-{
-	return EquippedWeapon;
-}
-
 // Called every frame
 void AFpsWaveCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
-
-// Called to bind functionality to input
-void AFpsWaveCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 void AFpsWaveCharacter::ChangeCapsuleSizeCrouch(EMoveState MoveState)
@@ -207,8 +188,8 @@ void AFpsWaveCharacter::Interact()
 	case EOverlapDetected::EOD_Weapon:
 
 		if (!DetectedWeapon) return;
-		//감지된 무기 장착
-		//todo 교체시 아이템교체, set collision enabled 해제
+		//바닥에 떨어진 무기로 교체시 장착중인 무기를 바닥에 떨어져 있던 무기로 교체
+		//set collision enabled 해제
 		if (DetectedWeapon.IsA(AGun::StaticClass()))
 		{
 			AGun* Gun = Cast<AGun>(DetectedWeapon);
@@ -216,17 +197,18 @@ void AFpsWaveCharacter::Interact()
 			
 			if (Gun->ActorHasTag(FName("Rifle")))
 			{
-				WeaponInventory.AttachedRifle = Gun;
+				WeaponInventory.AttachedRifle = Cast<ARifle>(Gun);
+				WeaponEquipType = EPlayerWeaponType::EPW_Rifle;
 			}
 			else if (Gun->ActorHasTag(FName("Shotgun")))
 			{
-				WeaponInventory.AttachedShotgun = Gun;
+				WeaponInventory.AttachedShotgun = Cast<AShotgun>(Gun);
+				WeaponEquipType = EPlayerWeaponType::EPW_Shotgun;
 			}
 
 			EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 			EquippedWeapon->SetActorHiddenInGame(true);
 			EquippedWeapon = Gun;
-			EquipType = EPlayerEquipType::EPE_Gun;
 		}
 		else if (DetectedWeapon.IsA(AMelee::StaticClass()))
 		{
@@ -235,17 +217,18 @@ void AFpsWaveCharacter::Interact()
 			
 			if (Melee->ActorHasTag(FName("Katana")))
 			{
-				WeaponInventory.AttachedKatana = Melee;
+				WeaponInventory.AttachedKatana = Cast<AKatana>(Melee);
+				WeaponEquipType = EPlayerWeaponType::EPW_Katana;
 			}
 			else if (Melee->ActorHasTag(FName("Hammer")))
 			{
-				WeaponInventory.AttachedHammer = Melee;
+				WeaponInventory.AttachedHammer = Cast<AWarHammer>(Melee);
+				WeaponEquipType = EPlayerWeaponType::EPW_WarHammer;
 			}
 
 			EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 			EquippedWeapon->SetActorHiddenInGame(true);
 			EquippedWeapon = Melee;
-			EquipType = EPlayerEquipType::EPE_Melee;
 		}
 
 		if (SwapWeaponMontage)
@@ -257,16 +240,16 @@ void AFpsWaveCharacter::Interact()
 		OverlapDetectedType = EOverlapDetected::EOD_None;
 		break;
 	}
-
-	
 }
 
 void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 {
+	// 기존 attack montage델리게이트 해제
+	EquippedWeapon->OnTriggerMontage.RemoveDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
 	// 새로 장착할 무기와 현재 무기가 같은지 미리 확인
 	AFpsWaveWeapon* NewWeapon = nullptr;
 	FName SocketName;
-	EPlayerEquipType NewEquipType;
+	EPlayerWeaponType NewEquipType;
     
 	// 키에 따른 새 무기 결정
 	if (key == 1 || key == 2)
@@ -274,26 +257,30 @@ void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 		if (key == 1)
 		{
 			NewWeapon = WeaponInventory.AttachedRifle;
+			NewEquipType = EPlayerWeaponType::EPW_Rifle;
 		}
 		else if (key == 2)
 		{
 			NewWeapon = WeaponInventory.AttachedShotgun;
+			NewEquipType = EPlayerWeaponType::EPW_Shotgun;
 		}
+		
 		SocketName = FName("rightHandGunSocket");
-		NewEquipType = EPlayerEquipType::EPE_Gun;
 	}
 	else if (key == 3 || key == 4)
 	{
 		if (key == 3)
 		{
 			NewWeapon = WeaponInventory.AttachedKatana;
+			NewEquipType = EPlayerWeaponType::EPW_Katana;
 		}
 		else if (key == 4)
 		{
 			NewWeapon = WeaponInventory.AttachedHammer;
+			NewEquipType = EPlayerWeaponType::EPW_WarHammer;
 		}
+		
 		SocketName = FName("rightHandMeleeSocket");
-		NewEquipType = EPlayerEquipType::EPE_Melee;
 	}
     
 	// 이미 같은 무기가 장착되어 있으면 아무것도 하지 않음
@@ -326,7 +313,9 @@ void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 	EquippedWeapon = NewWeapon;
 	EquippedWeapon->SetActorHiddenInGame(false);
 	EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, SocketName);
-	EquipType = NewEquipType;
+	WeaponEquipType = NewEquipType;
+	// 새 attack montage델리게이트 바인딩
+	EquippedWeapon->OnTriggerMontage.AddDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
 }
 
 void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
@@ -343,44 +332,46 @@ void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
 		WeaponIndex = 1;
 	}
 
+	// 기존 attack montage델리게이트 해제
+	EquippedWeapon->OnTriggerMontage.RemoveDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
+
 	if (EquippedWeapon && EquippedWeapon->IsValidLowLevel())
 	{
 		EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		EquippedWeapon->SetActorHiddenInGame(true);
 	}
 	
+	FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
+	
 	if (WeaponIndex == 1 || WeaponIndex == 2)
 	{
 		if (WeaponIndex == 1)
 		{
 			EquippedWeapon = WeaponInventory.AttachedRifle;
-			FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
 			EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, FName("rightHandGunSocket"));
+			WeaponEquipType = EPlayerWeaponType::EPW_Rifle;
 		}
 		else if (WeaponIndex == 2)
 		{
 			EquippedWeapon = WeaponInventory.AttachedShotgun;
-			FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
 			EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, FName("rightHandGunSocket"));
+			WeaponEquipType = EPlayerWeaponType::EPW_Shotgun;
 		}
-		
-		EquipType = EPlayerEquipType::EPE_Gun;
 	}
 	else if (WeaponIndex == 3 || WeaponIndex == 4)
 	{
 		if (WeaponIndex == 3)
 		{
 			EquippedWeapon = WeaponInventory.AttachedKatana;
-			FAttachmentTransformRules Rules(EAttachmentRule::SnapToTarget, true);
 			EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, FName("rightHandMeleeSocket"));
+			WeaponEquipType = EPlayerWeaponType::EPW_Katana;
 		}
 		else if (WeaponIndex == 4)
 		{
 			EquippedWeapon = WeaponInventory.AttachedHammer;
-			EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("rightHandMeleeSocket"));
+			EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, FName("rightHandMeleeSocket"));
+			WeaponEquipType = EPlayerWeaponType::EPW_WarHammer;
 		}
-		
-		EquipType = EPlayerEquipType::EPE_Melee;
 	}
 	
 	if (SwapWeaponMontage)
@@ -388,6 +379,31 @@ void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
 		GetMesh()->GetAnimInstance()->Montage_Play(SwapWeaponMontage);
 	}
 	EquippedWeapon->SetActorHiddenInGame(false);
+	// 새 attack montage델리게이트 바인딩
+	EquippedWeapon->OnTriggerMontage.AddDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
+}
+
+void AFpsWaveCharacter::PlayAttackMontage()
+{
+	if (AttackMontage)
+	{
+		GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
+
+		switch (WeaponEquipType)
+		{
+			//todo
+		case EPlayerWeaponType::EPW_Rifle:
+			GetMesh()->GetAnimInstance()->Montage_JumpToSection(FName("Rifle"), AttackMontage);
+			break;
+		case EPlayerWeaponType::EPW_Shotgun:
+			GetMesh()->GetAnimInstance()->Montage_JumpToSection(FName("Shotgun"), AttackMontage);
+			break;
+		case EPlayerWeaponType::EPW_Katana:
+			break;
+		case EPlayerWeaponType::EPW_WarHammer:
+			break;
+		}
+	}
 }
 
 void AFpsWaveCharacter::Attack()
@@ -396,6 +412,21 @@ void AFpsWaveCharacter::Attack()
 	{
 		EquippedWeapon->Attack();
 		PlayerAttackState = EAttackState::EAS_Attack;
+
+		switch (WeaponEquipType)
+		{
+			//todo
+		case EPlayerWeaponType::EPW_Rifle:
+			CurrentCameraShake = FpsWaveController->PlayerCameraManager->StartCameraShake(RifleCameraShake);
+			break;
+		case EPlayerWeaponType::EPW_Shotgun:
+			break;
+		case EPlayerWeaponType::EPW_Katana:
+			break;
+		case EPlayerWeaponType::EPW_WarHammer:
+			break;
+		}
+		
 	}
 }
 
@@ -405,8 +436,89 @@ void AFpsWaveCharacter::AttackFinished()
 	{
 		EquippedWeapon->AttackFinished();
 		PlayerAttackState = EAttackState::EAS_None;
+		FpsWaveController->PlayerCameraManager->StopCameraShake(CurrentCameraShake);
 	}
 }
 
+#pragma region Getter/Setters
+TObjectPtr<class UChildActorComponent> AFpsWaveCharacter::GetFpsCameraChildActor()
+{
+	return FpsCameraChildActor;
+}
 
+TObjectPtr<class UChildActorComponent> AFpsWaveCharacter::GetTpsCrouchCameraChildActor()
+{
+	return TpsCrouchCameraChildActor;
+}
 
+TObjectPtr<class UChildActorComponent> AFpsWaveCharacter::GetTpsCameraChildActor()
+{
+	return TpsCameraChildActor;
+}
+
+TObjectPtr<class USpringArmComponent> AFpsWaveCharacter::GetFpsCrouchSpringArm()
+{
+	return FpsCrouchSpringArm;
+}
+
+TObjectPtr<class USpringArmComponent> AFpsWaveCharacter::GetFpsSpringArm()
+{
+	return FpsSpringArm;
+}
+
+TObjectPtr<class USpringArmComponent> AFpsWaveCharacter::GetTpsCrouchSpringArm()
+{
+	return TpsCrouchSpringArm;
+}
+
+TObjectPtr<class USpringArmComponent> AFpsWaveCharacter::GetTpsSpringArm()
+{
+	return TpsSpringArm;
+}
+
+TObjectPtr<class UChildActorComponent> AFpsWaveCharacter::GetFpsCrouchCameraChildActor()
+{
+	return FpsCrouchCameraChildActor;
+}
+
+TObjectPtr<class UChildActorComponent> AFpsWaveCharacter::GetTpsZoomInCameraChildActor()
+{
+	return TpsZoomInCameraChildActor;
+}
+
+TObjectPtr<AFpsWaveWeapon> AFpsWaveCharacter::GetDetectedWeapon()
+{
+	return DetectedWeapon;
+}
+
+void AFpsWaveCharacter::SetDetectedWeapon(AFpsWaveWeapon* Weapon)
+{
+	this->DetectedWeapon = Weapon;
+}
+
+EOverlapDetected AFpsWaveCharacter::GetOverlapDetectedType() const
+{
+	return OverlapDetectedType;
+}
+
+void AFpsWaveCharacter::SetOverlapDetectedType(EOverlapDetected DetectedType)
+{
+	this->OverlapDetectedType = DetectedType;
+}
+
+EPlayerWeaponType AFpsWaveCharacter::GetPlayerWeaponType() const
+{
+	return WeaponEquipType;
+}
+
+EAttackState AFpsWaveCharacter::GetPlayerAttackState() const
+{
+	return PlayerAttackState;
+}
+
+TObjectPtr<AFpsWaveWeapon> AFpsWaveCharacter::GetEquippedWeapon()
+{
+	return EquippedWeapon;
+}
+
+#pragma endregion

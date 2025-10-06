@@ -71,10 +71,10 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
     	//공격시
         if (CurrentAttackDelay <= 1e-12)
         {
-            CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, MaxTopLocation.Y, InDeltaTime, 5.f);
-            CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, MaxBottomLocation.Y, InDeltaTime, 5.f);
-            CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, MaxLeftLocation.X, InDeltaTime, 5.f);
-            CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, MaxRightLocation.X, InDeltaTime, 5.f);
+            CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, MaxTopLocation.Y, InDeltaTime, 10.f);
+            CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, MaxBottomLocation.Y, InDeltaTime, 10.f);
+            CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, MaxLeftLocation.X, InDeltaTime, 10.f);
+            CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, MaxRightLocation.X, InDeltaTime, 10.f);
         	CurrentAttackDelay = MaxAttackDelay;
         }
         
@@ -85,10 +85,11 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
         // 공격이 완전히 끝났을 때 (연속 사격 아닐 때)
         if (!bAttackFinished)
         {
-            CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime, 10.f);
-            CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime, 10.f);
-            CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, DefaultLeftLocation.X, InDeltaTime, 10.f);
-            CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, DefaultRightLocation.X, InDeltaTime, 10.f);
+        	//todo interpspeed 변수화
+            CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime, 5.f);
+            CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime, 5.f);
+            CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, DefaultLeftLocation.X, InDeltaTime, 5.f);
+            CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, DefaultRightLocation.X, InDeltaTime, 5.f);
             
             if (FMath::IsNearlyEqual(CurrentTopLocation.Y, DefaultTopLocation.Y, 0.5f) &&
                 FMath::IsNearlyEqual(CurrentBottomLocation.Y, DefaultBottomLocation.Y, 0.5f) &&
@@ -116,10 +117,6 @@ void UCrosshair::IncreaseAimWidth()
 	{
 		MaxAttackDelay = Player->GetEquippedWeapon()->GetAttackDelay();
 		CurrentAttackDelay = 0.1f;
-		CurrentTopLocation = DefaultTopLocation;
-		CurrentBottomLocation = DefaultBottomLocation;
-		CurrentLeftLocation = DefaultLeftLocation;
-		CurrentRightLocation = DefaultRightLocation;
 	}
 }
 

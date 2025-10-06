@@ -7,6 +7,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Controllers/FpsWaveCharacterController.h"
 #include "HUD/Crosshair.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 // Sets default values
@@ -17,10 +18,8 @@ AGun::AGun()
 
 	FirePoint = CreateDefaultSubobject<USceneComponent>(TEXT("FirePoint"));
 	FirePoint->SetupAttachment(GetItemMesh());
-	AttackDelay = 0.1f;
-	ReloadSpeed = 2.f;
-	MaxBulletCount = 30;
-	CurrentBulletCount = MaxBulletCount;
+	MaxAccuracy = 100.f;
+	AccuracyDecreasePerShot = (MaxAccuracy - MinAccuracy) / (MaxBulletCount - 8);
 }
 
 // Called when the game starts or when spawned
@@ -45,7 +44,7 @@ void AGun::Attack()
 void AGun::StartAutoFire()
 {
 	bIsFiring = true;
-    
+	GetWorld()->GetTimerManager().ClearTimer(AccuracyRecoveryTimer);
 	// 첫 번째 총알 즉시 발사 (지연 없음)
 	FireSingleBullet();
     
@@ -61,7 +60,8 @@ void AGun::StartAutoFire()
 
 void AGun::FireSingleBullet()
 {
-	//todo 총알발사소리, 총알 발사 지점 scenecomponent로 변경하기, projectile movement 사용
+	//todo Accuracy 조정
+	
 
 	// 파티클 스폰
 	if (GunFireParticles)
@@ -72,6 +72,11 @@ void AGun::FireSingleBullet()
 			FRotator::ZeroRotator,
 			EAttachLocation::SnapToTargetIncludingScale,
 			true);
+	}
+
+	if (OnTriggerMontage.IsBound())
+	{
+		OnTriggerMontage.Broadcast();
 	}
 	
 	FVector2D ViewPort;
@@ -94,9 +99,22 @@ void AGun::FireSingleBullet()
 
 	if (!bScreenToWorld) return;
 
+	//------------------------------------------------------
+	// 🔫 Accuracy 기반 탄퍼짐 추가
+	//------------------------------------------------------
+	float MaxSpread = 2.f; // 최대 퍼짐 각도(도 단위)
+	float ClampedAccuracy = FMath::Clamp(CurrentAccuracy, MinAccuracy, MaxAccuracy); // 60~100으로 제한
+	float SpreadAngle = FMath::Lerp(0.f, MaxSpread, (MaxAccuracy - ClampedAccuracy) / 40.f);
+
+	// Crosshair 방향 벡터를 중심으로 랜덤한 퍼짐 벡터 생성
+	FVector RandomShootDirection = UKismetMathLibrary::RandomUnitVectorInConeInDegrees(
+		CrosshairWorldDirection, SpreadAngle
+	);
+	//------------------------------------------------------
+
 	// 카메라에서 쏘는 라인트레이스
 	FVector Start = CrosshairWorldPosition;
-	FVector End   = Start + CrosshairWorldDirection * 10000.f; // 사정거리
+	FVector End   = Start + RandomShootDirection * 10000.f; // 수정된 방향 사용
 
 	FHitResult CrosshairHit;
 	FCollisionQueryParams Params;
@@ -124,9 +142,7 @@ void AGun::FireSingleBullet()
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GunImpactParticles, BeamEndPoint);
 	}
-
 }
-
 
 void AGun::AttackFinished()
 {
@@ -134,6 +150,31 @@ void AGun::AttackFinished()
 
 	bIsFiring = false;
 	GetWorld()->GetTimerManager().ClearTimer(AttackTimer);
+	// 🎯 기존 Accuracy 회복 타이머가 있다면 먼저 정리
+	GetWorld()->GetTimerManager().ClearTimer(AccuracyRecoveryTimer);
+
+	// 🎯 Accuracy 회복 시작
+	GetWorld()->GetTimerManager().SetTimer(
+		AccuracyRecoveryTimer,
+		this,
+		&AGun::RecoverAccuracy,
+		0.016f,   // 60fps 기준 Tick 느낌
+		true      // 반복 실행
+	);
+}
+
+void AGun::RecoverAccuracy()
+{
+	// Accuracy를 천천히 MaxAccuracy로 회복
+	//todo Crosshair interpspeed에 맞춰서 돌아오기
+	CurrentAccuracy = FMath::FInterpTo(CurrentAccuracy, MaxAccuracy, 0.016f, 5.f);
+
+	// 거의 회복됐으면 타이머 정지
+	if (FMath::IsNearlyEqual(CurrentAccuracy, MaxAccuracy, 0.1f))
+	{
+		CurrentAccuracy = MaxAccuracy;
+		GetWorld()->GetTimerManager().ClearTimer(AccuracyRecoveryTimer);
+	}
 }
 
 // Called every frame

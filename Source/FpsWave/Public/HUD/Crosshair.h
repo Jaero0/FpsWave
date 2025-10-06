@@ -56,5 +56,4 @@ private:
 	void ResetAimWidth();
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
-
 };

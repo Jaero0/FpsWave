@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "FpsWaveWeapon.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTriggerMontage);
+
 UCLASS()
 class FPSWAVE_API AFpsWaveWeapon : public AActor
 {
@@ -14,6 +16,8 @@ class FPSWAVE_API AFpsWaveWeapon : public AActor
 public:	
 	AFpsWaveWeapon();
 	virtual void Tick(float DeltaTime) override;
+
+	FOnTriggerMontage OnTriggerMontage;
 	
 	virtual void Attack();
 	virtual void AttackFinished();
@@ -39,6 +43,7 @@ protected:
 		int32 OtherBodyIndex
 	);
 
+	UPROPERTY(EditAnywhere, Category="Gun")
 	float AttackDelay;
 
 private:

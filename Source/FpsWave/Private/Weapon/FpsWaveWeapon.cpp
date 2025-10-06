@@ -77,8 +77,6 @@ void AFpsWaveWeapon::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
 
 float AFpsWaveWeapon::GetAttackDelay()
 {
-	UE_LOG(LogTemp, Warning, TEXT("%f"), 0.001f);
-
-	return 0.001f;
+	return 0.f;
 }
 

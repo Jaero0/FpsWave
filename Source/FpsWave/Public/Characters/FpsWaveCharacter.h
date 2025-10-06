@@ -13,39 +13,39 @@ struct FDefaultWeapon
 	GENERATED_BODY()
 
 private:
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AGun> DefaultRifle;
+	UPROPERTY(EditAnywhere, Category="DefaultWeapon")
+	TSubclassOf<class ARifle> DefaultRifle;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AGun> DefaultShotgun;
+	UPROPERTY(EditAnywhere, Category="DefaultWeapon")
+	TSubclassOf<class AShotgun> DefaultShotgun;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AMelee> DefaultKatana;
+	UPROPERTY(EditAnywhere, Category="DefaultWeapon")
+	TSubclassOf<class AKatana> DefaultKatana;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AMelee> DefaultHammer;
+	UPROPERTY(EditAnywhere, Category="DefaultWeapon")
+	TSubclassOf<class AWarHammer> DefaultHammer;
 
 public:
 FORCEINLINE
-	TSubclassOf<class AGun> GetDefaultRifle()
+	TSubclassOf<class ARifle> GetDefaultRifle()
 	{
 		return DefaultRifle;
 	}
 
 FORCEINLINE
-	TSubclassOf<class AGun> GetDefaultShotgun()
+	TSubclassOf<class AShotgun> GetDefaultShotgun()
 	{
 		return DefaultShotgun;
 	}
 
 FORCEINLINE
-	TSubclassOf<class AMelee> GetDefaultKatana()
+	TSubclassOf<class AKatana> GetDefaultKatana()
 	{
 		return DefaultKatana;
 	}
 
 FORCEINLINE
-	TSubclassOf<class AMelee> GetDefaultHammer()
+	TSubclassOf<class AWarHammer> GetDefaultHammer()
 	{
 		return DefaultHammer;
 	}
@@ -57,7 +57,7 @@ struct FWeaponInventory
 	GENERATED_BODY()
 
 private:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="DefaultWeapon")
 	FDefaultWeapon DefaultWeapon;
 
 public:
@@ -68,10 +68,10 @@ public:
 	}
 
 public:
-	TObjectPtr<AGun> AttachedRifle;
-	TObjectPtr<AGun> AttachedShotgun;
-	TObjectPtr<AMelee> AttachedKatana;
-	TObjectPtr<AMelee> AttachedHammer;
+	TObjectPtr<ARifle> AttachedRifle;
+	TObjectPtr<AShotgun> AttachedShotgun;
+	TObjectPtr<AKatana> AttachedKatana;
+	TObjectPtr<AWarHammer> AttachedHammer;
 
 	// 기타 필요한 무기 정보들 추가 가능
 };
@@ -84,7 +84,6 @@ class FPSWAVE_API AFpsWaveCharacter : public ACharacter
 public:
 	AFpsWaveCharacter();
 	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	void ChangeCapsuleSizeCrouch(EMoveState MoveState);
 
 protected:
@@ -103,141 +102,102 @@ private:
 #pragma region Camera
 	TObjectPtr<class AFpsWaveCharacterController> FpsWaveController;
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Camera")
 	TObjectPtr<class USpringArmComponent> TpsSpringArm;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Camera")
 	TObjectPtr<class UChildActorComponent> TpsCameraChildActor;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Camera")
 	TObjectPtr<class USpringArmComponent> TpsCrouchSpringArm;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Camera")
 	TObjectPtr<class UChildActorComponent> TpsCrouchCameraChildActor;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Camera")
 	TObjectPtr<class USpringArmComponent> FpsSpringArm;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Camera")
 	TObjectPtr<class UChildActorComponent> FpsCameraChildActor;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Camera")
 	TObjectPtr<class USpringArmComponent> FpsCrouchSpringArm;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Camera")
 	TObjectPtr<class UChildActorComponent> FpsCrouchCameraChildActor;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Camera")
 	TObjectPtr<class USpringArmComponent> TpsZoomInSpringArm;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Camera")
 	TObjectPtr<class UChildActorComponent> TpsZoomInCameraChildActor;
 
 	FTimerHandle ViewTimerHandle;
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="Camera")
 	float DefaultTpsSpringArmLength = 250.f;
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="Camera")
 	float DefaultFpsSpringArmLength = 0.f;
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="Camera")
 	float DefaultTpsZoomInSpringArmLength = 100.f;
 
 #pragma endregion
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Weapon")
 	TObjectPtr<class AFpsWaveWeapon> DetectedWeapon;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess="true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess="true"), Category="Weapon")
 	FWeaponInventory WeaponInventory;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Weapon")
 	TObjectPtr<class AFpsWaveWeapon> EquippedWeapon;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Weapon")
 	EOverlapDetected OverlapDetectedType = EOverlapDetected::EOD_None;
-	EPlayerEquipType EquipType = EPlayerEquipType::EPE_Gun;
+	EPlayerWeaponType WeaponEquipType = EPlayerWeaponType::EPW_Rifle;
 
 	void Interact();
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<class UAnimMontage> SwapWeaponMontage;
 	void ChangeWeapon_Key(int key);
 	int WeaponIndex = 1;
 	void ChangeWeapon_MouseWheel(int input);
-
+	
+	UPROPERTY(EditAnywhere, Category="Animation")
+	TObjectPtr<class UAnimMontage> AttackMontage;
 	EAttackState PlayerAttackState = EAttackState::EAS_None;
+	TObjectPtr<UCameraShakeBase> CurrentCameraShake;
+	UPROPERTY(EditAnywhere, Category="Camera Animation")
+	TSubclassOf<class UCameraShakeBase> RifleCameraShake;
+	UPROPERTY(EditAnywhere, Category="Camera Animation")
+	TSubclassOf<class UCameraShakeBase> ShotgunCameraShake;
+	UPROPERTY(EditAnywhere, Category="Camera Animation")
+	TSubclassOf<class UCameraShakeBase> KatanaCameraShake;
+	UPROPERTY(EditAnywhere, Category="Camera Animation")
+	TSubclassOf<class UCameraShakeBase> WarHammerCameraShake;
 	void Attack();
+	UFUNCTION()
+	void PlayAttackMontage();
 	void AttackFinished();
 
 public:
-	FORCEINLINE
-	TObjectPtr<class USpringArmComponent> GetTpsSpringArm()
-	{
-		return TpsSpringArm;
-	}
+	TObjectPtr<USpringArmComponent> GetTpsSpringArm();
 
-	FORCEINLINE
-	TObjectPtr<class USpringArmComponent> GetTpsCrouchSpringArm()
-	{
-		return TpsCrouchSpringArm;
-	}
+	TObjectPtr<USpringArmComponent> GetTpsCrouchSpringArm();
 
-	FORCEINLINE
-	TObjectPtr<class USpringArmComponent> GetFpsSpringArm()
-	{
-		return FpsSpringArm;
-	}
+	TObjectPtr<USpringArmComponent> GetFpsSpringArm();
 
-	FORCEINLINE
-	TObjectPtr<class USpringArmComponent> GetFpsCrouchSpringArm()
-	{
-		return FpsCrouchSpringArm;
-	}
+	TObjectPtr<USpringArmComponent> GetFpsCrouchSpringArm();
 
-	FORCEINLINE
-	TObjectPtr<class UChildActorComponent> GetTpsCameraChildActor()
-	{
-		return TpsCameraChildActor;
-	}
+	TObjectPtr<UChildActorComponent> GetTpsCameraChildActor();
 
-	FORCEINLINE
-	TObjectPtr<class UChildActorComponent> GetTpsCrouchCameraChildActor()
-	{
-		return TpsCrouchCameraChildActor;
-	}
+	TObjectPtr<UChildActorComponent> GetTpsCrouchCameraChildActor();
 
-	FORCEINLINE
-	TObjectPtr<class UChildActorComponent> GetFpsCameraChildActor()
-	{
-		return FpsCameraChildActor;
-	}
+	TObjectPtr<UChildActorComponent> GetFpsCameraChildActor();
 
-	FORCEINLINE
-	TObjectPtr<class UChildActorComponent> GetFpsCrouchCameraChildActor()
-	{
-		return FpsCrouchCameraChildActor;
-	}
+	TObjectPtr<UChildActorComponent> GetFpsCrouchCameraChildActor();
 
-	FORCEINLINE
-	TObjectPtr<class UChildActorComponent> GetTpsZoomInCameraChildActor()
-	{
-		return TpsZoomInCameraChildActor;
-	}
+	TObjectPtr<UChildActorComponent> GetTpsZoomInCameraChildActor();
 
-	FORCEINLINE
-	TObjectPtr<AFpsWaveWeapon> GetDetectedWeapon()
-	{
-		return DetectedWeapon;
-	}
+	TObjectPtr<AFpsWaveWeapon> GetDetectedWeapon();
 
-	FORCEINLINE
-	void SetDetectedWeapon(AFpsWaveWeapon* Weapon)
-	{
-		this->DetectedWeapon = Weapon;
-	}
+	void SetDetectedWeapon(AFpsWaveWeapon* Weapon);
 
-	FORCEINLINE
-	EOverlapDetected GetOverlapDetectedType()
-	{
-		return OverlapDetectedType;
-	}
+	EOverlapDetected GetOverlapDetectedType() const;
 
-	FORCEINLINE
-	void SetOverlapDetectedType(EOverlapDetected DetectedType)
-	{
-		this->OverlapDetectedType = DetectedType;
-	}
+	void SetOverlapDetectedType(EOverlapDetected DetectedType);
 
 	UFUNCTION(BlueprintPure)
-	EPlayerEquipType GetPlayerEquipType() const;
+	EPlayerWeaponType GetPlayerWeaponType() const;
 
 	UFUNCTION(BlueprintPure)
 	EAttackState GetPlayerAttackState() const;
