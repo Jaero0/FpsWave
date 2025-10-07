@@ -13,8 +13,12 @@ ARifle::ARifle()
 	AttackDelay = 0.1f;
 	ReloadSpeed = 2.f;
 	MaxBulletCount = 30;
-	CurrentBulletCount = MaxBulletCount;
+	MaxAccuracy = 100.f;
 	MinAccuracy = 60;
+	CurrentAccuracy = MaxAccuracy;
+	MaxSpreadAngle = 20.f;
+	MinSpreadAngle = 0.5f;
+	AccuracyDecreasePerShot = (MaxAccuracy - MinAccuracy) / (MaxBulletCount - 8);
 }
 
 // Called when the game starts or when spawned

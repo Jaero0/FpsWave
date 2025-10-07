@@ -18,25 +18,31 @@ AGun::AGun()
 
 	FirePoint = CreateDefaultSubobject<USceneComponent>(TEXT("FirePoint"));
 	FirePoint->SetupAttachment(GetItemMesh());
+
+	AttackDelay = 0.1f;
+	ReloadSpeed = 2.f;
+	MaxBulletCount = 30;
 	MaxAccuracy = 100.f;
-	AccuracyDecreasePerShot = (MaxAccuracy - MinAccuracy) / (MaxBulletCount - 8);
+	MinAccuracy = 80;
+	CurrentAccuracy = MaxAccuracy;
+	MaxSpreadAngle = 20.f;
+	MinSpreadAngle = 0.5f;
+	AccuracyDecreasePerShot = (MaxAccuracy - MinAccuracy) / (MaxBulletCount);
 }
 
 // Called when the game starts or when spawned
 void AGun::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (auto Cont = GetWorld()->GetFirstPlayerController<AFpsWaveCharacterController>())
+	{
+		PlayerController = Cont;
+	}
 }
 
 void AGun::Attack()
 {
-	// 이미 발사 중이면 리턴 (중복 방지)
-	if (bIsFiring)
-	{
-		return;
-	}
-    
 	// 자동 발사 시작
 	StartAutoFire();
 }
@@ -44,7 +50,6 @@ void AGun::Attack()
 void AGun::StartAutoFire()
 {
 	bIsFiring = true;
-	GetWorld()->GetTimerManager().ClearTimer(AccuracyRecoveryTimer);
 	// 첫 번째 총알 즉시 발사 (지연 없음)
 	FireSingleBullet();
     
@@ -61,8 +66,6 @@ void AGun::StartAutoFire()
 void AGun::FireSingleBullet()
 {
 	//todo Accuracy 조정
-	
-
 	// 파티클 스폰
 	if (GunFireParticles)
 	{
@@ -78,44 +81,61 @@ void AGun::FireSingleBullet()
 	{
 		OnTriggerMontage.Broadcast();
 	}
-	
-	FVector2D ViewPort;
-	GetWorld()->GetGameViewport()->GetViewportSize(ViewPort);
 
-	// 화면 중앙 좌표 (Crosshair)
-	FVector2D CrosshairLocation(ViewPort.X / 2.f, ViewPort.Y / 2.f);
-	CrosshairLocation.Y -= 50.f;
+	if (!PlayerController)
+	{
+		if (auto Cont = GetWorld()->GetFirstPlayerController<AFpsWaveCharacterController>())
+		{
+			PlayerController = Cont;
+		}
+	}
+
+	FVector2D WidgetScreenPosition = FVector2d::ZeroVector;
+	if (TObjectPtr<UCrosshair> Crosshair = PlayerController->GetCrosshairObj())
+	{
+		WidgetScreenPosition = Crosshair->GetAimLocation();
+	}
 
 	FVector CrosshairWorldPosition;
 	FVector CrosshairWorldDirection;
 
 	// 스크린 좌표 → 월드 좌표/방향 변환
 	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
-		UGameplayStatics::GetPlayerController(this, 0),
-		CrosshairLocation,
+		PlayerController,
+		WidgetScreenPosition,
 		CrosshairWorldPosition,
-		CrosshairWorldDirection
-	);
+		CrosshairWorldDirection);
 
 	if (!bScreenToWorld) return;
 
-	//------------------------------------------------------
-	// 🔫 Accuracy 기반 탄퍼짐 추가
-	//------------------------------------------------------
-	float MaxSpread = 2.f; // 최대 퍼짐 각도(도 단위)
-	float ClampedAccuracy = FMath::Clamp(CurrentAccuracy, MinAccuracy, MaxAccuracy); // 60~100으로 제한
-	float SpreadAngle = FMath::Lerp(0.f, MaxSpread, (MaxAccuracy - ClampedAccuracy) / 40.f);
 
-	// Crosshair 방향 벡터를 중심으로 랜덤한 퍼짐 벡터 생성
-	FVector RandomShootDirection = UKismetMathLibrary::RandomUnitVectorInConeInDegrees(
-		CrosshairWorldDirection, SpreadAngle
-	);
-	//------------------------------------------------------
+
+
+	
+	// 랜덤 탄착군 적용 (원뿔 형태로 퍼짐)
+	CurrentAccuracy = FMath::Max(CurrentAccuracy - AccuracyDecreasePerShot, MinAccuracy);
+
+	// MinAccuracy~MaxAccuracy 범위를 0~1로 정규화
+	float NormalizedAccuracy = (CurrentAccuracy - MinAccuracy) / (MaxAccuracy - MinAccuracy);
+	
+	// 정확도가 낮을수록 큰 각도
+	float SpreadAngle = FMath::Lerp(MaxSpreadAngle, MinSpreadAngle, NormalizedAccuracy);
+
+	// 랜덤 방향으로 각도 오프셋 추가
+	FVector SpreadDirection = FMath::VRandCone(CrosshairWorldDirection, 
+		FMath::DegreesToRadians(SpreadAngle));
 
 	// 카메라에서 쏘는 라인트레이스
 	FVector Start = CrosshairWorldPosition;
-	FVector End   = Start + RandomShootDirection * 10000.f; // 수정된 방향 사용
+	FVector End = Start + (SpreadDirection * 10000.f);
 
+	UE_LOG(LogTemp, Warning, TEXT("WidgetScreenPosition = %s"), *FString(WidgetScreenPosition.ToString()));
+
+
+
+
+	
+	
 	FHitResult CrosshairHit;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
@@ -144,36 +164,25 @@ void AGun::FireSingleBullet()
 	}
 }
 
+//todo tick으로 accuracy회복
 void AGun::AttackFinished()
 {
 	Super::AttackFinished();
 
 	bIsFiring = false;
 	GetWorld()->GetTimerManager().ClearTimer(AttackTimer);
-	// 🎯 기존 Accuracy 회복 타이머가 있다면 먼저 정리
-	GetWorld()->GetTimerManager().ClearTimer(AccuracyRecoveryTimer);
-
-	// 🎯 Accuracy 회복 시작
-	GetWorld()->GetTimerManager().SetTimer(
-		AccuracyRecoveryTimer,
-		this,
-		&AGun::RecoverAccuracy,
-		0.016f,   // 60fps 기준 Tick 느낌
-		true      // 반복 실행
-	);
 }
 
-void AGun::RecoverAccuracy()
+void AGun::RecoverAccuracy(float DeltaTime)
 {
 	// Accuracy를 천천히 MaxAccuracy로 회복
 	//todo Crosshair interpspeed에 맞춰서 돌아오기
-	CurrentAccuracy = FMath::FInterpTo(CurrentAccuracy, MaxAccuracy, 0.016f, 5.f);
+	CurrentAccuracy = FMath::FInterpTo(CurrentAccuracy, MaxAccuracy, DeltaTime, 5.f);
 
 	// 거의 회복됐으면 타이머 정지
 	if (FMath::IsNearlyEqual(CurrentAccuracy, MaxAccuracy, 0.1f))
 	{
 		CurrentAccuracy = MaxAccuracy;
-		GetWorld()->GetTimerManager().ClearTimer(AccuracyRecoveryTimer);
 	}
 }
 
@@ -181,6 +190,15 @@ void AGun::RecoverAccuracy()
 void AGun::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (bIsFiring == true || FMath::IsNearlyEqual(CurrentAccuracy, MaxAccuracy, 0.1f))
+	{
+		
+		return;
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("Tick"));
+	RecoverAccuracy(DeltaTime);
 }
 
 float AGun::GetAttackDelay()

@@ -24,12 +24,15 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Gun")
 	TObjectPtr<class USceneComponent> FirePoint;
 	FTimerHandle AttackTimer;
-	FTimerHandle AccuracyRecoveryTimer;
 	bool bIsFiring;
 	UPROPERTY(EditAnywhere, Category="Gun")
 	float ReloadSpeed;
 	UPROPERTY(EditAnywhere, Category="Gun")
 	int MaxBulletCount;
+	UPROPERTY(EditAnywhere, Category="Gun")
+	float MaxSpreadAngle;
+	UPROPERTY(EditAnywhere, Category="Gun")
+	float MinSpreadAngle;
 	int CurrentBulletCount;
 	UPROPERTY(EditAnywhere, Category="Gun")
 	TObjectPtr<class UNiagaraSystem> GunFireParticles;
@@ -37,7 +40,9 @@ protected:
 	TObjectPtr<class UParticleSystem> GunImpactParticles;
 	float AccuracyDecreasePerShot;
 	float CurrentAccuracy;
+	UPROPERTY(EditAnywhere, Category="Gun")
 	float MaxAccuracy;
+	UPROPERTY(EditAnywhere, Category="Gun")
 	float MinAccuracy;
 	
 	// Called when the game starts or when spawned
@@ -47,7 +52,10 @@ protected:
 	virtual void StartAutoFire();
 	virtual void FireSingleBullet();
 	virtual void AttackFinished() override;
-	void RecoverAccuracy();
+	void RecoverAccuracy(float DeltaTime);
+
+private:
+	TObjectPtr<class AFpsWaveCharacterController> PlayerController;
 
 public:
 	// Called every frame

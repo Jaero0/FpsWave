@@ -3,6 +3,7 @@
 UENUM(BlueprintType)
 enum class EMoveState : uint8
 {
+	EMS_Idle UMETA(DisplayName=Idle),
 	EMS_Walk UMETA(DisplayName=Walk),
 	EMS_ZoomInWalk UMETA(DisplayName="Zoom In Walk"),
 	EMS_Run UMETA(DisplayName=Run),
