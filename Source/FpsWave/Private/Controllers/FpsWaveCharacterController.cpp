@@ -9,6 +9,7 @@
 #include "DataAssets/InputDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "HUD/Crosshair.h"
 #include "HUD/Toggles.h"
 
 void AFpsWaveCharacterController::BeginPlay()
@@ -32,23 +33,24 @@ void AFpsWaveCharacterController::BeginPlay()
 	PlayerCameraManager->ViewPitchMin = -60.f;
 	PlayerCameraManager->ViewPitchMax = 70.f;
 
-#pragma region init widget
+	#pragma region init widget
 	if (ToggleWidget)
 	{
-		if (UUserWidget* UserWidget = CreateWidget<UUserWidget>(GetWorld(), ToggleWidget))
+		if (UUserWidget* Toggle = CreateWidget<UUserWidget>(GetWorld(), ToggleWidget))
 		{
-			UserWidget->AddToViewport();
+			Toggle->AddToViewport();
 		}
 	}
 
 	if (CrosshairWidget)
 	{
-		if (UUserWidget* UserWidget = CreateWidget<UUserWidget>(GetWorld(), CrosshairWidget))
+		if (UUserWidget* Crosshair = CreateWidget<UUserWidget>(GetWorld(), CrosshairWidget))
 		{
-			UserWidget->AddToViewport();
+			Crosshair->AddToViewport();
+			CrosshairObj = Cast<UCrosshair>(Crosshair);
 		}
 	}
-#pragma endregion
+	#pragma endregion
 }
 
 void AFpsWaveCharacterController::Tick(float DeltaSeconds)
@@ -144,6 +146,12 @@ void AFpsWaveCharacterController::SetCharacterMoveStateUpdateSpeed(EMoveState Mo
 	UpdateMoveSpeed();
 }
 
+TObjectPtr<UCrosshair> AFpsWaveCharacterController::GetCrosshairObj()
+{
+	return CrosshairObj;
+}
+
+
 void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue)
 {
 	FVector2D Vector2D = InputActionValue.Get<FVector2D>();
@@ -154,6 +162,11 @@ void AFpsWaveCharacterController::Move(const FInputActionValue &InputActionValue
 	RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 	GetPawn()->AddMovementInput(ForwardDirection, Vector2D.Y);
 	GetPawn()->AddMovementInput(RightDirection, Vector2D.X);
+}
+
+void AFpsWaveCharacterController::MoveEnd()
+{
+	CharacterMoveState = EMoveState::EMS_Idle;
 }
 
 #pragma region 시점 제어
@@ -334,6 +347,9 @@ void AFpsWaveCharacterController::UpdateMoveSpeed()
 	{
 		switch (CharacterMoveState)
 		{
+		case EMoveState::EMS_Idle:
+			Movement->MaxWalkSpeed = WalkSpeed;
+			break;
 		case EMoveState::EMS_Run:
 			Movement->MaxWalkSpeed = RunningSpeed;
 			break;
@@ -493,6 +509,7 @@ void AFpsWaveCharacterController::SetupInputComponent()
 		if (InputDataAsset)
 		{
 			EnhancedInputComponent->BindAction(InputDataAsset->MoveAction, ETriggerEvent::Triggered, this, &AFpsWaveCharacterController::Move);
+			EnhancedInputComponent->BindAction(InputDataAsset->MoveAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::MoveEnd);
 			EnhancedInputComponent->BindAction(InputDataAsset->RunAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::RunInputStarted);
 			EnhancedInputComponent->BindAction(InputDataAsset->RunAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::RunInputCompleted);
 			EnhancedInputComponent->BindAction(InputDataAsset->CrouchAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::CrouchInputStarted);

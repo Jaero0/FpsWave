@@ -51,9 +51,28 @@ protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
+	float AimIncreaseSpeed = 10.f;
+	float AimDecreaseSpeed = 5.f;
+	
 	FTimerHandle DelegateHandle;
 	void IncreaseAimWidth();
 	void ResetAimWidth();
+	TObjectPtr<class AFpsWaveCharacterController> PlayerController;
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
+
+public:
+	FVector2d GetAimLocation();
+
+	FORCEINLINE
+	float GetAimIncreaseSpeed()
+	{
+		return AimIncreaseSpeed;
+	}
+
+	FORCEINLINE
+	float GetAimDecreaseSpeed()
+	{
+		return AimDecreaseSpeed;
+	}
 };

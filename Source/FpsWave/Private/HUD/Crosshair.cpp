@@ -3,6 +3,7 @@
 
 #include "HUD/Crosshair.h"
 
+#include "Blueprint/SlateBlueprintLibrary.h"
 #include "Characters/FpsWaveCharacter.h"
 #include "Components/Border.h"
 #include "Controllers/FpsWaveCharacterController.h"
@@ -38,12 +39,12 @@ void UCrosshair::BindDelegates()
 {
 	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
 	{
-		if (AFpsWaveCharacterController* Controller = Cast<AFpsWaveCharacterController>(PC))
+		if (PlayerController = Cast<AFpsWaveCharacterController>(PC))
 		{
-			Controller->OnAttackDelegate.AddUObject(this, &UCrosshair::IncreaseAimWidth);
-			Controller->OnAttackFinishedDelegate.AddUObject(this, &UCrosshair::ResetAimWidth);
+			PlayerController->OnAttackDelegate.AddUObject(this, &UCrosshair::IncreaseAimWidth);
+			PlayerController->OnAttackFinishedDelegate.AddUObject(this, &UCrosshair::ResetAimWidth);
 
-			if (AFpsWaveCharacter* FpsWaveCharacter = Cast<AFpsWaveCharacter>(Controller->GetPawn()))
+			if (AFpsWaveCharacter* FpsWaveCharacter = Cast<AFpsWaveCharacter>(PlayerController->GetPawn()))
 			{
 				Player = FpsWaveCharacter;
 			}
@@ -62,7 +63,7 @@ void UCrosshair::UpdateCrosshairPositions()
 void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
-    
+
     if (bAttackStarted)
     {
         // Pending 시간 카운트
@@ -71,10 +72,10 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
     	//공격시
         if (CurrentAttackDelay <= 1e-12)
         {
-            CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, MaxTopLocation.Y, InDeltaTime, 10.f);
-            CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, MaxBottomLocation.Y, InDeltaTime, 10.f);
-            CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, MaxLeftLocation.X, InDeltaTime, 10.f);
-            CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, MaxRightLocation.X, InDeltaTime, 10.f);
+            CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, MaxTopLocation.Y, InDeltaTime, AimIncreaseSpeed);
+            CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, MaxBottomLocation.Y, InDeltaTime, AimIncreaseSpeed);
+            CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, MaxLeftLocation.X, InDeltaTime, AimIncreaseSpeed);
+            CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, MaxRightLocation.X, InDeltaTime, AimIncreaseSpeed);
         	CurrentAttackDelay = MaxAttackDelay;
         }
         
@@ -86,10 +87,10 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
         if (!bAttackFinished)
         {
         	//todo interpspeed 변수화
-            CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime, 5.f);
-            CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime, 5.f);
-            CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, DefaultLeftLocation.X, InDeltaTime, 5.f);
-            CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, DefaultRightLocation.X, InDeltaTime, 5.f);
+            CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime, AimDecreaseSpeed);
+            CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime, AimDecreaseSpeed);
+            CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, DefaultLeftLocation.X, InDeltaTime, AimDecreaseSpeed);
+            CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, DefaultRightLocation.X, InDeltaTime, AimDecreaseSpeed);
             
             if (FMath::IsNearlyEqual(CurrentTopLocation.Y, DefaultTopLocation.Y, 0.5f) &&
                 FMath::IsNearlyEqual(CurrentBottomLocation.Y, DefaultBottomLocation.Y, 0.5f) &&
@@ -125,5 +126,22 @@ void UCrosshair::ResetAimWidth()
 	bAttackStarted = false;
 }
 
+FVector2d UCrosshair::GetAimLocation()
+{
+	FGeometry Geometry = Aim->GetPaintSpaceGeometry();
+    
+	FVector2D AbsolutePosition = Geometry.GetAbsolutePosition();
+	FVector2D PixelPosition;
+	FVector2D ViewportPosition;
+    
+	USlateBlueprintLibrary::AbsoluteToViewport(
+	   GetWorld(),
+	   AbsolutePosition,
+	   PixelPosition,
+	   ViewportPosition
+	);
+    
+	return PixelPosition;
+}
 
 

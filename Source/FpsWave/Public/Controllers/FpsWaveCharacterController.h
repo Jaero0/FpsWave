@@ -59,9 +59,11 @@ private:
 	TSubclassOf<UUserWidget> ToggleWidget;
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> CrosshairWidget;
+	TObjectPtr<class UCrosshair> CrosshairObj;
 	
 	TObjectPtr<class USpringArmComponent> GetCurrentSpringArm() const;
 	void Move(const FInputActionValue &InputActionValue);
+	void MoveEnd();
 	void RunInputCompleted(const FInputActionValue &InputActionValue);
 	void RunInputStarted(const FInputActionValue &InputActionValue);
 	void UpdateMoveSpeed();
@@ -103,8 +105,8 @@ private:
 
 	EToggleMode RunToggleMode = EToggleMode::ETM_None;
 	EToggleMode CrouchToggleMode = EToggleMode::ETM_None;
-	EMoveState CharacterMoveState = EMoveState::EMS_Walk;
-	EMoveState PrevCharacterMoveState = EMoveState::EMS_Walk;
+	EMoveState CharacterMoveState = EMoveState::EMS_Idle;
+	EMoveState PrevCharacterMoveState = EMoveState::EMS_Idle;
 	EPointOfViewType PointOfViewType = EPointOfViewType::EPT_ThirdPersonView;
 
 	void Interact();
@@ -132,4 +134,6 @@ public:
 	bool GetIsFreeCamStarted() const;
 
 	void SetCharacterMoveStateUpdateSpeed(EMoveState MoveState);
+
+	TObjectPtr<UCrosshair> GetCrosshairObj();
 };

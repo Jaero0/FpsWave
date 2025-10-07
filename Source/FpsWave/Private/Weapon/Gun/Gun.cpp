@@ -129,7 +129,6 @@ void AGun::FireSingleBullet()
 	FVector Start = CrosshairWorldPosition;
 	FVector End = Start + (SpreadDirection * 10000.f);
 
-	UE_LOG(LogTemp, Warning, TEXT("WidgetScreenPosition = %s"), *FString(WidgetScreenPosition.ToString()));
 
 
 
@@ -176,8 +175,7 @@ void AGun::AttackFinished()
 void AGun::RecoverAccuracy(float DeltaTime)
 {
 	// Accuracy를 천천히 MaxAccuracy로 회복
-	//todo Crosshair interpspeed에 맞춰서 돌아오기
-	CurrentAccuracy = FMath::FInterpTo(CurrentAccuracy, MaxAccuracy, DeltaTime, 5.f);
+	CurrentAccuracy = FMath::FInterpTo(CurrentAccuracy, MaxAccuracy, DeltaTime, PlayerController->GetCrosshairObj()->GetAimDecreaseSpeed());
 
 	// 거의 회복됐으면 타이머 정지
 	if (FMath::IsNearlyEqual(CurrentAccuracy, MaxAccuracy, 0.1f))
@@ -197,7 +195,6 @@ void AGun::Tick(float DeltaTime)
 		return;
 	}
 
-	UE_LOG(LogTemp, Error, TEXT("Tick"));
 	RecoverAccuracy(DeltaTime);
 }
 
