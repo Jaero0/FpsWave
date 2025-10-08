@@ -21,9 +21,18 @@ public:
 	AGun();
 
 protected:
+	TObjectPtr<class AFpsWaveCharacterController> PlayerController;
+
+	UPROPERTY(EditAnywhere, Category="Gun")
+	TObjectPtr<class USoundBase> FireSound;
 	UPROPERTY(EditAnywhere, Category="Gun")
 	TObjectPtr<class USceneComponent> FirePoint;
 	FTimerHandle AttackTimer;
+	int CurrentBulletCount;
+	UPROPERTY(EditAnywhere, Category="Gun")
+	TObjectPtr<class UNiagaraSystem> GunFireParticles;
+	UPROPERTY(EditAnywhere, Category="Gun")
+	TObjectPtr<class UParticleSystem> GunImpactParticles;
 	bool bIsFiring;
 	UPROPERTY(EditAnywhere, Category="Gun")
 	float ReloadSpeed;
@@ -33,11 +42,6 @@ protected:
 	float MaxSpreadAngle;
 	UPROPERTY(EditAnywhere, Category="Gun")
 	float MinSpreadAngle;
-	int CurrentBulletCount;
-	UPROPERTY(EditAnywhere, Category="Gun")
-	TObjectPtr<class UNiagaraSystem> GunFireParticles;
-	UPROPERTY(EditAnywhere, Category="Gun")
-	TObjectPtr<class UParticleSystem> GunImpactParticles;
 	float AccuracyDecreasePerShot;
 	float CurrentAccuracy;
 	UPROPERTY(EditAnywhere, Category="Gun")
@@ -55,7 +59,7 @@ protected:
 	void RecoverAccuracy(float DeltaTime);
 
 private:
-	TObjectPtr<class AFpsWaveCharacterController> PlayerController;
+	
 
 public:
 	// Called every frame

@@ -77,6 +77,11 @@ void AGun::FireSingleBullet()
 			true);
 	}
 
+	if (FireSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), FireSound, this->GetActorLocation());
+	}
+
 	if (OnTriggerMontage.IsBound())
 	{
 		OnTriggerMontage.Broadcast();
@@ -122,7 +127,8 @@ void AGun::FireSingleBullet()
 	float SpreadAngle = FMath::Lerp(MaxSpreadAngle, MinSpreadAngle, NormalizedAccuracy);
 
 	// 랜덤 방향으로 각도 오프셋 추가
-	FVector SpreadDirection = FMath::VRandCone(CrosshairWorldDirection, 
+	FVector SpreadDirection = FMath::VRandCone(
+		CrosshairWorldDirection,
 		FMath::DegreesToRadians(SpreadAngle));
 
 	// 카메라에서 쏘는 라인트레이스

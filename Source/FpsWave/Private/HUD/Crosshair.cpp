@@ -13,8 +13,6 @@ void UCrosshair::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	//GetWorld()->GetTimerManager().SetTimer(DelegateHandle, this, &UCrosshair::BindDelegates, 0.2f);
-
 	BindDelegates();
 	
 	DefaultTopLocation = Top->GetRenderTransform().Translation;
@@ -70,7 +68,7 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
         CurrentAttackDelay -= InDeltaTime;
 
     	//공격시
-        if (CurrentAttackDelay <= 1e-12)
+        if (CurrentAttackDelay <= 0.f)
         {
             CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, MaxTopLocation.Y, InDeltaTime, AimIncreaseSpeed);
             CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, MaxBottomLocation.Y, InDeltaTime, AimIncreaseSpeed);
@@ -78,15 +76,13 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
             CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, MaxRightLocation.X, InDeltaTime, AimIncreaseSpeed);
         	CurrentAttackDelay = MaxAttackDelay;
         }
-        
-        UpdateCrosshairPositions();
+    	UpdateCrosshairPositions();
     }
     else
     {
         // 공격이 완전히 끝났을 때 (연속 사격 아닐 때)
         if (!bAttackFinished)
         {
-        	//todo interpspeed 변수화
             CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime, AimDecreaseSpeed);
             CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime, AimDecreaseSpeed);
             CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, DefaultLeftLocation.X, InDeltaTime, AimDecreaseSpeed);
@@ -117,7 +113,27 @@ void UCrosshair::IncreaseAimWidth()
 	if (Player)
 	{
 		MaxAttackDelay = Player->GetEquippedWeapon()->GetAttackDelay();
-		CurrentAttackDelay = 0.1f;
+		CurrentAttackDelay = -1;
+
+		switch (Player->GetPlayerWeaponType())
+		{
+		case EPlayerWeaponType::EPW_Rifle:
+			SetAimIncreaseSpeed(10.f);
+			SetAimDecreaseSpeed(5.f);
+			break;
+		case EPlayerWeaponType::EPW_Shotgun:
+			SetAimIncreaseSpeed(30.f);
+			SetAimDecreaseSpeed(10.f);
+			break;
+		case EPlayerWeaponType::EPW_Katana:
+			SetAimIncreaseSpeed(0);
+			SetAimDecreaseSpeed(0);
+			break;
+		case EPlayerWeaponType::EPW_WarHammer:
+			SetAimIncreaseSpeed(0);
+			SetAimDecreaseSpeed(0);
+			break;
+		}
 	}
 }
 
@@ -128,20 +144,35 @@ void UCrosshair::ResetAimWidth()
 
 FVector2d UCrosshair::GetAimLocation()
 {
-	FGeometry Geometry = Aim->GetPaintSpaceGeometry();
+	FGeometry Geometry = Aim->GetCachedGeometry();
     
 	FVector2D AbsolutePosition = Geometry.GetAbsolutePosition();
+	FVector2D WidgetSize = Geometry.GetAbsoluteSize(); // 위젯 크기 가져오기
+    
+	// 중심점 계산
+	FVector2D AbsoluteCenterPosition = AbsolutePosition + (WidgetSize * 0.5f);
+    
 	FVector2D PixelPosition;
 	FVector2D ViewportPosition;
     
 	USlateBlueprintLibrary::AbsoluteToViewport(
 	   GetWorld(),
-	   AbsolutePosition,
+	   AbsoluteCenterPosition, // 중심점 사용
 	   PixelPosition,
 	   ViewportPosition
 	);
     
 	return PixelPosition;
+}
+
+void UCrosshair::SetAimIncreaseSpeed(float Speed)
+{
+	AimIncreaseSpeed = Speed;
+}
+
+void UCrosshair::SetAimDecreaseSpeed(float Speed)
+{
+	AimDecreaseSpeed = Speed;
 }
 
 

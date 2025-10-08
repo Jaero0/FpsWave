@@ -396,7 +396,7 @@ void AFpsWaveCharacter::PlayAttackMontage()
 			GetMesh()->GetAnimInstance()->Montage_JumpToSection(FName("Rifle"), AttackMontage);
 			break;
 		case EPlayerWeaponType::EPW_Shotgun:
-			GetMesh()->GetAnimInstance()->Montage_JumpToSection(FName("Shotgun"), AttackMontage);
+			//Shotgun의 Recoil 메서드 사용함
 			break;
 		case EPlayerWeaponType::EPW_Katana:
 			break;
@@ -420,6 +420,7 @@ void AFpsWaveCharacter::Attack()
 			CurrentCameraShake = FpsWaveController->PlayerCameraManager->StartCameraShake(RifleCameraShake);
 			break;
 		case EPlayerWeaponType::EPW_Shotgun:
+			CurrentCameraShake = FpsWaveController->PlayerCameraManager->StartCameraShake(ShotgunCameraShake);
 			break;
 		case EPlayerWeaponType::EPW_Katana:
 			break;

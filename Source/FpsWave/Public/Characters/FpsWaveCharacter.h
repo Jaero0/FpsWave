@@ -156,13 +156,13 @@ private:
 	TObjectPtr<class UAnimMontage> AttackMontage;
 	EAttackState PlayerAttackState = EAttackState::EAS_None;
 	TObjectPtr<UCameraShakeBase> CurrentCameraShake;
-	UPROPERTY(EditAnywhere, Category="Camera Animation")
+	UPROPERTY(EditAnywhere, Category="Camera Shake")
 	TSubclassOf<class UCameraShakeBase> RifleCameraShake;
-	UPROPERTY(EditAnywhere, Category="Camera Animation")
+	UPROPERTY(EditAnywhere, Category="Camera Shake")
 	TSubclassOf<class UCameraShakeBase> ShotgunCameraShake;
-	UPROPERTY(EditAnywhere, Category="Camera Animation")
+	UPROPERTY(EditAnywhere, Category="Camera Shake")
 	TSubclassOf<class UCameraShakeBase> KatanaCameraShake;
-	UPROPERTY(EditAnywhere, Category="Camera Animation")
+	UPROPERTY(EditAnywhere, Category="Camera Shake")
 	TSubclassOf<class UCameraShakeBase> WarHammerCameraShake;
 	void Attack();
 	UFUNCTION()

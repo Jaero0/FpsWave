@@ -69,10 +69,14 @@ public:
 	{
 		return AimIncreaseSpeed;
 	}
+	
+	void SetAimIncreaseSpeed(float Speed);
 
 	FORCEINLINE
 	float GetAimDecreaseSpeed()
 	{
 		return AimDecreaseSpeed;
 	}
+	
+	void SetAimDecreaseSpeed(float Speed);
 };
