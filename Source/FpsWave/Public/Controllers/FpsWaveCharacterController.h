@@ -19,6 +19,8 @@ DECLARE_DELEGATE_OneParam(FOnWeaponChange_Key_Delegate, int)
 DECLARE_DELEGATE_OneParam(FOnWeaponChange_MouseWheel_Delegate, int)
 DECLARE_MULTICAST_DELEGATE(FOnAttackDelegate)
 DECLARE_MULTICAST_DELEGATE(FOnAttackFinishedDelegate)
+DECLARE_MULTICAST_DELEGATE(FOnReloadDelegate)
+
 /**
  * 
  */
@@ -41,6 +43,7 @@ public:
 	FOnWeaponChange_MouseWheel_Delegate OnWeaponChange_MouseWheel_Delegate;
 	FOnAttackDelegate OnAttackDelegate;
 	FOnAttackFinishedDelegate OnAttackFinishedDelegate;
+	FOnReloadDelegate OnReloadDelegate;
 
 protected:
 	virtual void BeginPlay() override;
@@ -119,6 +122,8 @@ private:
 
 	void Attack();
 	void AttackFinished();
+
+	void Reload();
 
 public:
 	FORCEINLINE

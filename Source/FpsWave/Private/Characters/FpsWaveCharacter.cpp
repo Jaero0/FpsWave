@@ -76,6 +76,7 @@ void AFpsWaveCharacter::BindDelegate()
 		Cont->OnWeaponChange_MouseWheel_Delegate.BindUObject(this, &AFpsWaveCharacter::ChangeWeapon_MouseWheel);
 		Cont->OnAttackDelegate.AddUObject(this, &AFpsWaveCharacter::Attack);
 		Cont->OnAttackFinishedDelegate.AddUObject(this, &AFpsWaveCharacter::AttackFinished);
+		Cont->OnReloadDelegate.AddUObject(this, &AFpsWaveCharacter::Reload);
 	}
 }
 
@@ -91,7 +92,6 @@ void AFpsWaveCharacter::BeginPlay()
 	GetMesh()->HideBoneByName(FName("weapon_r"), PBO_None);
 	GetMesh()->HideBoneByName(FName("weapon_l"), PBO_None);
 	
-	//todo, 시작무기 = Rifle, 장착 시 Collision overlap 해제
 	WeaponInventory.AttachedRifle = GetWorld()->SpawnActor<ARifle>(WeaponInventory.GetDefaultWeapon().GetDefaultRifle());
 	WeaponInventory.AttachedRifle->GetBoxComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponInventory.AttachedShotgun = GetWorld()->SpawnActor<AShotgun>(WeaponInventory.GetDefaultWeapon().GetDefaultShotgun());
@@ -124,7 +124,7 @@ void AFpsWaveCharacter::OnChangePointOfViewType()
 	{
 		GetWorld()->GetTimerManager().SetTimer(
 			ViewTimerHandle,
-			FTimerDelegate::CreateWeakLambda(this, [this]()
+			FTimerDelegate::CreateWeakLambda(this, [this]
 			{
 				GetMesh()->HideBoneByName(FName("neck_01"), PBO_None);
 			}),
@@ -249,7 +249,6 @@ void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 	// 새로 장착할 무기와 현재 무기가 같은지 미리 확인
 	AFpsWaveWeapon* NewWeapon = nullptr;
 	FName SocketName;
-	EPlayerWeaponType NewEquipType;
     
 	// 키에 따른 새 무기 결정
 	if (key == 1 || key == 2)
@@ -257,12 +256,12 @@ void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 		if (key == 1)
 		{
 			NewWeapon = WeaponInventory.AttachedRifle;
-			NewEquipType = EPlayerWeaponType::EPW_Rifle;
+			WeaponEquipType = EPlayerWeaponType::EPW_Rifle;
 		}
 		else if (key == 2)
 		{
 			NewWeapon = WeaponInventory.AttachedShotgun;
-			NewEquipType = EPlayerWeaponType::EPW_Shotgun;
+			WeaponEquipType = EPlayerWeaponType::EPW_Shotgun;
 		}
 		
 		SocketName = FName("rightHandGunSocket");
@@ -272,12 +271,12 @@ void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 		if (key == 3)
 		{
 			NewWeapon = WeaponInventory.AttachedKatana;
-			NewEquipType = EPlayerWeaponType::EPW_Katana;
+			WeaponEquipType = EPlayerWeaponType::EPW_Katana;
 		}
 		else if (key == 4)
 		{
 			NewWeapon = WeaponInventory.AttachedHammer;
-			NewEquipType = EPlayerWeaponType::EPW_WarHammer;
+			WeaponEquipType = EPlayerWeaponType::EPW_WarHammer;
 		}
 		
 		SocketName = FName("rightHandMeleeSocket");
@@ -313,7 +312,6 @@ void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 	EquippedWeapon = NewWeapon;
 	EquippedWeapon->SetActorHiddenInGame(false);
 	EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, SocketName);
-	WeaponEquipType = NewEquipType;
 	// 새 attack montage델리게이트 바인딩
 	EquippedWeapon->OnTriggerMontage.AddDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
 }
@@ -396,7 +394,7 @@ void AFpsWaveCharacter::PlayAttackMontage()
 			GetMesh()->GetAnimInstance()->Montage_JumpToSection(FName("Rifle"), AttackMontage);
 			break;
 		case EPlayerWeaponType::EPW_Shotgun:
-			//Shotgun의 Recoil 메서드 사용함
+			GetMesh()->GetAnimInstance()->Montage_JumpToSection(FName("Shotgun"), AttackMontage);
 			break;
 		case EPlayerWeaponType::EPW_Katana:
 			break;
@@ -412,22 +410,6 @@ void AFpsWaveCharacter::Attack()
 	{
 		EquippedWeapon->Attack();
 		PlayerAttackState = EAttackState::EAS_Attack;
-
-		switch (WeaponEquipType)
-		{
-			//todo
-		case EPlayerWeaponType::EPW_Rifle:
-			CurrentCameraShake = FpsWaveController->PlayerCameraManager->StartCameraShake(RifleCameraShake);
-			break;
-		case EPlayerWeaponType::EPW_Shotgun:
-			CurrentCameraShake = FpsWaveController->PlayerCameraManager->StartCameraShake(ShotgunCameraShake);
-			break;
-		case EPlayerWeaponType::EPW_Katana:
-			break;
-		case EPlayerWeaponType::EPW_WarHammer:
-			break;
-		}
-		
 	}
 }
 
@@ -437,52 +419,90 @@ void AFpsWaveCharacter::AttackFinished()
 	{
 		EquippedWeapon->AttackFinished();
 		PlayerAttackState = EAttackState::EAS_None;
-		FpsWaveController->PlayerCameraManager->StopCameraShake(CurrentCameraShake);
+	}
+}
+
+void AFpsWaveCharacter::Reload()
+{
+	if (PlayerAttackState == EAttackState::EAS_Reload)
+	{
+		return;
+	}
+	
+	if (WeaponEquipType == EPlayerWeaponType::EPW_Rifle || WeaponEquipType == EPlayerWeaponType::EPW_Shotgun)
+	{
+		PlayerAttackState = EAttackState::EAS_Reload;
+
+		auto AnimInstance = GetMesh()->GetAnimInstance();
+		
+		AnimInstance->Montage_Play(ReloadMontage);
+
+		switch (WeaponEquipType)
+		{
+		case EPlayerWeaponType::EPW_Rifle:
+			AnimInstance->Montage_JumpToSection("Rifle");
+			break;
+		case EPlayerWeaponType::EPW_Shotgun:
+			AnimInstance->Montage_JumpToSection("Shotgun");
+			break;
+		}
+	}
+}
+
+//ABP에서 ReloadEndNotify호출시 실행
+void AFpsWaveCharacter::ReloadEnd()
+{
+	UE_LOG(LogTemp, Warning, TEXT("AnimNotify_AttackAvailable called"));
+	PlayerAttackState = EAttackState::EAS_Attack;
+
+	if (auto Gun = Cast<AGun>(EquippedWeapon))
+	{
+		Gun->ResetCurrentBulletCountToMax();
 	}
 }
 
 #pragma region Getter/Setters
-TObjectPtr<class UChildActorComponent> AFpsWaveCharacter::GetFpsCameraChildActor()
+TObjectPtr<UChildActorComponent> AFpsWaveCharacter::GetFpsCameraChildActor()
 {
 	return FpsCameraChildActor;
 }
 
-TObjectPtr<class UChildActorComponent> AFpsWaveCharacter::GetTpsCrouchCameraChildActor()
+TObjectPtr<UChildActorComponent> AFpsWaveCharacter::GetTpsCrouchCameraChildActor()
 {
 	return TpsCrouchCameraChildActor;
 }
 
-TObjectPtr<class UChildActorComponent> AFpsWaveCharacter::GetTpsCameraChildActor()
+TObjectPtr<UChildActorComponent> AFpsWaveCharacter::GetTpsCameraChildActor()
 {
 	return TpsCameraChildActor;
 }
 
-TObjectPtr<class USpringArmComponent> AFpsWaveCharacter::GetFpsCrouchSpringArm()
+TObjectPtr<USpringArmComponent> AFpsWaveCharacter::GetFpsCrouchSpringArm()
 {
 	return FpsCrouchSpringArm;
 }
 
-TObjectPtr<class USpringArmComponent> AFpsWaveCharacter::GetFpsSpringArm()
+TObjectPtr<USpringArmComponent> AFpsWaveCharacter::GetFpsSpringArm()
 {
 	return FpsSpringArm;
 }
 
-TObjectPtr<class USpringArmComponent> AFpsWaveCharacter::GetTpsCrouchSpringArm()
+TObjectPtr<USpringArmComponent> AFpsWaveCharacter::GetTpsCrouchSpringArm()
 {
 	return TpsCrouchSpringArm;
 }
 
-TObjectPtr<class USpringArmComponent> AFpsWaveCharacter::GetTpsSpringArm()
+TObjectPtr<USpringArmComponent> AFpsWaveCharacter::GetTpsSpringArm()
 {
 	return TpsSpringArm;
 }
 
-TObjectPtr<class UChildActorComponent> AFpsWaveCharacter::GetFpsCrouchCameraChildActor()
+TObjectPtr<UChildActorComponent> AFpsWaveCharacter::GetFpsCrouchCameraChildActor()
 {
 	return FpsCrouchCameraChildActor;
 }
 
-TObjectPtr<class UChildActorComponent> AFpsWaveCharacter::GetTpsZoomInCameraChildActor()
+TObjectPtr<UChildActorComponent> AFpsWaveCharacter::GetTpsZoomInCameraChildActor()
 {
 	return TpsZoomInCameraChildActor;
 }

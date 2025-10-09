@@ -169,6 +169,14 @@ private:
 	void PlayAttackMontage();
 	void AttackFinished();
 
+	UPROPERTY(EditAnywhere, Category="Reload");
+	TObjectPtr<UAnimMontage> ReloadMontage;
+	UPROPERTY(EditAnywhere, Category="Reload");
+	TObjectPtr<USoundBase> ReloadSound;
+	void Reload();
+	UFUNCTION(BlueprintCallable)
+	void ReloadEnd();
+
 public:
 	TObjectPtr<USpringArmComponent> GetTpsSpringArm();
 

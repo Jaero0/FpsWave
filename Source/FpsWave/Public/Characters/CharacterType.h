@@ -55,5 +55,6 @@ enum class EAttackState : uint8
 {
 	EAS_None UMETA(DisplayName=None),
 	EAS_Attack UMETA(DisplayName=Attack),
+	EAS_Reload UMETA(DisplayName=Reload),
 	MAX UMETA(Hidden)
 };

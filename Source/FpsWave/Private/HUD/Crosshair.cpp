@@ -105,6 +105,7 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
     }
 }
 
+//todo 재장전시 prevnet
 void UCrosshair::IncreaseAimWidth()
 {
 	bAttackStarted = true;

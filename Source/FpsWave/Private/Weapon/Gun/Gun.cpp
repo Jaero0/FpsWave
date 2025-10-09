@@ -22,8 +22,10 @@ AGun::AGun()
 	AttackDelay = 0.1f;
 	ReloadSpeed = 2.f;
 	MaxBulletCount = 30;
+	CurrentBulletCount = MaxBulletCount;
 	MaxAccuracy = 100.f;
 	MinAccuracy = 80;
+	DefaultAccuracy = 100.f;
 	CurrentAccuracy = MaxAccuracy;
 	MaxSpreadAngle = 20.f;
 	MinSpreadAngle = 0.5f;
@@ -50,6 +52,7 @@ void AGun::Attack()
 void AGun::StartAutoFire()
 {
 	bIsFiring = true;
+	
 	// 첫 번째 총알 즉시 발사 (지연 없음)
 	FireSingleBullet();
     
@@ -65,7 +68,11 @@ void AGun::StartAutoFire()
 
 void AGun::FireSingleBullet()
 {
-	//todo Accuracy 조정
+	if (CurrentBulletCount <= 0)
+	{
+		return;
+	}
+
 	// 파티클 스폰
 	if (GunFireParticles)
 	{
@@ -94,6 +101,9 @@ void AGun::FireSingleBullet()
 			PlayerController = Cont;
 		}
 	}
+
+	//필수
+	Recoil();
 
 	FVector2D WidgetScreenPosition = FVector2d::ZeroVector;
 	if (TObjectPtr<UCrosshair> Crosshair = PlayerController->GetCrosshairObj())
@@ -167,9 +177,10 @@ void AGun::FireSingleBullet()
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GunImpactParticles, BeamEndPoint);
 	}
+
+	CurrentBulletCount--;
 }
 
-//todo tick으로 accuracy회복
 void AGun::AttackFinished()
 {
 	Super::AttackFinished();
@@ -190,22 +201,81 @@ void AGun::RecoverAccuracy(float DeltaTime)
 	}
 }
 
+void AGun::Recoil()
+{
+	if (!PlayerController)
+	{
+		if (auto Cont = Cast<AFpsWaveCharacterController>(GetWorld()->GetFirstPlayerController()))
+		{
+			PlayerController = Cont;      
+		}
+	}
+
+	float Pitch = FMath::FRandRange(4.0f, 6.f) * RecoilPitchMultiplier;
+	float Yaw = FMath::FRandRange(-3.0f, 3.0f) * RecoilYawMultiplier;
+
+	// 목표 반동 설정
+	TargetRecoilRotation = FRotator(-Pitch, Yaw, 0.f);
+	CurrentRecoilRotation = FRotator::ZeroRotator;
+	RecoilProgress = 0.f;
+	bIsRecoiling = true;
+}
+
 // Called every frame
 void AGun::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bIsFiring == true || FMath::IsNearlyEqual(CurrentAccuracy, MaxAccuracy, 0.1f))
+	if (bIsFiring == true)
 	{
-		
+		if (bIsRecoiling)
+		{
+			// 진행도 업데이트
+			RecoilProgress += DeltaTime / RecoilDuration;
+			RecoilProgress = FMath::Clamp(RecoilProgress, 0.f, 1.f);
+        
+			// 부드러운 보간 (커브 적용)
+			float Alpha = FMath::InterpEaseOut(0.f, 1.f, RecoilProgress, 2.0f);
+			FRotator NewRecoil = FMath::Lerp(FRotator::ZeroRotator, TargetRecoilRotation, Alpha);
+        
+			// 이전 프레임과의 차이만 적용
+			FRotator DeltaRecoil = NewRecoil - CurrentRecoilRotation;
+        
+			PlayerController->AddPitchInput(DeltaRecoil.Pitch);
+			PlayerController->AddYawInput(DeltaRecoil.Yaw);
+        
+			CurrentRecoilRotation = NewRecoil;
+        
+			// 반동 완료
+			if (RecoilProgress >= 1.f)
+			{
+				bIsRecoiling = false;
+			}
+		}
+	}
+	
+
+	if (FMath::IsNearlyEqual(CurrentAccuracy, MaxAccuracy, 0.1f))
+	{
 		return;
 	}
 
 	RecoverAccuracy(DeltaTime);
+	
 }
 
 float AGun::GetAttackDelay()
 {
 	return AttackDelay;
+}
+
+int32 AGun::GetMaxBulletCount()
+{
+	return MaxBulletCount;
+}
+
+void AGun::ResetCurrentBulletCountToMax()
+{
+	CurrentBulletCount = MaxBulletCount;
 }
 

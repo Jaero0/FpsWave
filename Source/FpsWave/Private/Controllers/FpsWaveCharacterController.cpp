@@ -130,6 +130,14 @@ void AFpsWaveCharacterController::AttackFinished()
 	}
 }
 
+void AFpsWaveCharacterController::Reload()
+{
+	if (OnReloadDelegate.IsBound())
+	{
+		OnReloadDelegate.Broadcast();
+	}
+}
+
 EMoveState AFpsWaveCharacterController::GetCharacterMoveState() const
 {
 	return CharacterMoveState;
@@ -529,6 +537,7 @@ void AFpsWaveCharacterController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(InputDataAsset->MouseWheelAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::ChangeWeaponMouseWheel);
 			EnhancedInputComponent->BindAction(InputDataAsset->AttackAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::Attack);
 			EnhancedInputComponent->BindAction(InputDataAsset->AttackAction, ETriggerEvent::Completed, this, &AFpsWaveCharacterController::AttackFinished);
+			EnhancedInputComponent->BindAction(InputDataAsset->ReloadkAction, ETriggerEvent::Started, this, &AFpsWaveCharacterController::Reload);
 		}
 	}
 }

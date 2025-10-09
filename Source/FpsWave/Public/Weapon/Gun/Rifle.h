@@ -23,6 +23,7 @@ protected:
 	virtual void StartAutoFire() override;
 	virtual void FireSingleBullet() override;
 	virtual void AttackFinished() override;
+	virtual void Recoil() override;
 
 public:
 	virtual float GetAttackDelay() override;

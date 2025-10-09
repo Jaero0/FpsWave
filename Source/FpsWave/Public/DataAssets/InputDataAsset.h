@@ -56,4 +56,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Input Asset")
 	TObjectPtr<class UInputAction> AttackAction;
+	
+	UPROPERTY(EditAnywhere, Category="Input Asset")
+	TObjectPtr<class UInputAction> ReloadkAction;
 };

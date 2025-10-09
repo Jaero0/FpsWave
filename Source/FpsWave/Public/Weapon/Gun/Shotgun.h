@@ -18,9 +18,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, Category=Gun)
+	UPROPERTY(EditAnywhere, Category="Shotgun")
 	int BulletPerShot;
-	UPROPERTY(EditAnywhere, Category=Gun)
+	UPROPERTY(EditAnywhere, Category="Shotgun")
 	float SpreadStartDistance;
 
 	virtual void Attack() override;
@@ -28,19 +28,9 @@ protected:
 	virtual void FireSingleBullet() override;
 	virtual void AttackFinished() override;
 
-	void Recoil();
-
-	UPROPERTY(EditAnywhere, Category = "Recoil")
-	float RecoilDuration = 0.15f; // 반동이 적용되는 시간
-
-	UPROPERTY(EditAnywhere, Category = "Recoil")
-	float RecoilInterpSpeed = 10.0f; // 보간 속도
+	virtual void Recoil() override;
 
 private:
-	FRotator TargetRecoilRotation;
-	FRotator CurrentRecoilRotation;
-	float RecoilProgress;
-	bool bIsRecoiling;
 
 public:
 	virtual float GetAttackDelay() override;

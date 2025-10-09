@@ -48,6 +48,11 @@ void ARifle::AttackFinished()
 	Super::AttackFinished();
 }
 
+void ARifle::Recoil()
+{
+	Super::Recoil();
+}
+
 float ARifle::GetAttackDelay()
 {
 	return AttackDelay;
