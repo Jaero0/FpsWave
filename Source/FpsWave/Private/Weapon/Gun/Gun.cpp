@@ -279,6 +279,11 @@ int32 AGun::GetMaxBulletCount()
 	return MaxBulletCount;
 }
 
+int32 AGun::GetCurrentBulletCount()
+{
+	return CurrentBulletCount;
+}
+
 void AGun::ResetCurrentBulletCountToMax()
 {
 	CurrentBulletCount = MaxBulletCount;

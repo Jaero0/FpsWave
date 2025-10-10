@@ -44,6 +44,9 @@ protected:
 	);
 
 	UPROPERTY(EditAnywhere, Category="Gun")
+	int32 MaxBulletCount;
+	int32 CurrentBulletCount;
+	UPROPERTY(EditAnywhere, Category="Gun")
 	float AttackDelay;
 
 private:
@@ -66,4 +69,6 @@ public:
 	}
 	
 	virtual float GetAttackDelay();
+	virtual int32 GetMaxBulletCount();
+	virtual int32 GetCurrentBulletCount();
 };

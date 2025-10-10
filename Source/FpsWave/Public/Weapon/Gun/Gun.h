@@ -30,10 +30,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Gun")
 	TObjectPtr<class USceneComponent> FirePoint;
 	FTimerHandle AttackTimer;
-	
-	UPROPERTY(EditAnywhere, Category="Gun")
-	int32 MaxBulletCount;
-	int32 CurrentBulletCount;
 
 	bool bIsFiring;
 	UPROPERTY(EditAnywhere, Category="Gun")
@@ -86,8 +82,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual float GetAttackDelay() override;
 
-	int32 GetMaxBulletCount();
-	int32 GetCurrentBulletCount();
+	virtual int32 GetMaxBulletCount() override;
+	virtual int32 GetCurrentBulletCount() override;
 	void ResetCurrentBulletCountToMax();
 
 };

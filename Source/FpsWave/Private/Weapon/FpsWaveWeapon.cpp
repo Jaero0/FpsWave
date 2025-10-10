@@ -21,6 +21,9 @@ AFpsWaveWeapon::AFpsWaveWeapon()
 	
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	ItemMesh->SetupAttachment(GetRootComponent());
+
+	MaxBulletCount = 1;
+	CurrentBulletCount = 1;
 }
 
 // Called when the game starts or when spawned
@@ -78,5 +81,15 @@ void AFpsWaveWeapon::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
 float AFpsWaveWeapon::GetAttackDelay()
 {
 	return 0.f;
+}
+
+int32 AFpsWaveWeapon::GetMaxBulletCount()
+{
+	return MaxBulletCount;
+}
+
+int32 AFpsWaveWeapon::GetCurrentBulletCount()
+{
+	return CurrentBulletCount;
 }
 

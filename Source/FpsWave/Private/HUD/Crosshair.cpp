@@ -61,27 +61,31 @@ void UCrosshair::UpdateCrosshairPositions()
 void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
+	
+	if (Player->GetEquippedWeapon()->GetCurrentBulletCount() > 0)
+	{
+		if (bAttackStarted == true)
+		{
+	    
+			// Pending 시간 카운트
+			CurrentAttackDelay -= InDeltaTime;
 
-    if (bAttackStarted)
-    {
-        // Pending 시간 카운트
-        CurrentAttackDelay -= InDeltaTime;
-
-    	//공격시
-        if (CurrentAttackDelay <= 0.f)
-        {
-            CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, MaxTopLocation.Y, InDeltaTime, AimIncreaseSpeed);
-            CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, MaxBottomLocation.Y, InDeltaTime, AimIncreaseSpeed);
-            CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, MaxLeftLocation.X, InDeltaTime, AimIncreaseSpeed);
-            CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, MaxRightLocation.X, InDeltaTime, AimIncreaseSpeed);
-        	CurrentAttackDelay = MaxAttackDelay;
-        }
-    	UpdateCrosshairPositions();
-    }
+			//공격시
+			if (CurrentAttackDelay <= 0.f)
+			{
+				CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, MaxTopLocation.Y, InDeltaTime, AimIncreaseSpeed);
+				CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, MaxBottomLocation.Y, InDeltaTime, AimIncreaseSpeed);
+				CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, MaxLeftLocation.X, InDeltaTime, AimIncreaseSpeed);
+				CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, MaxRightLocation.X, InDeltaTime, AimIncreaseSpeed);
+				CurrentAttackDelay = MaxAttackDelay;
+			}
+			UpdateCrosshairPositions();
+		}
+	}
     else
     {
         // 공격이 완전히 끝났을 때 (연속 사격 아닐 때)
-        if (!bAttackFinished)
+        if (bAttackFinished == false)
         {
             CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime, AimDecreaseSpeed);
             CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime, AimDecreaseSpeed);
