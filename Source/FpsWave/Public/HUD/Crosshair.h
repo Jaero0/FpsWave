@@ -60,6 +60,8 @@ private:
 	TObjectPtr<class AFpsWaveCharacterController> PlayerController;
 
 	TObjectPtr<class AFpsWaveCharacter> Player;
+	
+	float LastFireTime = 0.f;
 
 public:
 	FVector2d GetAimLocation();

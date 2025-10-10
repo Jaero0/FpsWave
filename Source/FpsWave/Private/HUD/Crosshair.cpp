@@ -18,19 +18,19 @@ void UCrosshair::NativeConstruct()
 	DefaultTopLocation = Top->GetRenderTransform().Translation;
 	CurrentTopLocation = DefaultTopLocation;
 	MaxTopLocation = DefaultTopLocation;
-	MaxTopLocation.Y -= 50.f;
+	MaxTopLocation.Y -= 100.f;
 	DefaultBottomLocation = Bottom->GetRenderTransform().Translation;
 	CurrentBottomLocation = DefaultBottomLocation;
 	MaxBottomLocation = DefaultBottomLocation;
-	MaxBottomLocation.Y += 50.f;
+	MaxBottomLocation.Y += 100.f;
 	DefaultLeftLocation = Left->GetRenderTransform().Translation;
 	CurrentLeftLocation = DefaultLeftLocation;
 	MaxLeftLocation = DefaultLeftLocation;
-	MaxLeftLocation.X -= 50.f;
+	MaxLeftLocation.X -= 100.f;
 	DefaultRightLocation = Right->GetRenderTransform().Translation;
 	CurrentRightLocation = DefaultRightLocation;
 	MaxRightLocation = DefaultRightLocation;
-	MaxRightLocation.X += 50.f;
+	MaxRightLocation.X += 100.f;
 }
 
 void UCrosshair::BindDelegates()
@@ -66,26 +66,37 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	{
 		if (bAttackStarted == true)
 		{
-	    
 			// Pending 시간 카운트
 			CurrentAttackDelay -= InDeltaTime;
+			float CurrentLifeTime = GetWorld()->GetTimeSeconds();
+			if (CurrentLifeTime - LastFireTime < MaxAttackDelay)
+			{
+				return;
+			}
 
 			//공격시
 			if (CurrentAttackDelay <= 0.f)
 			{
+				LastFireTime = CurrentLifeTime;
 				CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, MaxTopLocation.Y, InDeltaTime, AimIncreaseSpeed);
 				CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, MaxBottomLocation.Y, InDeltaTime, AimIncreaseSpeed);
 				CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, MaxLeftLocation.X, InDeltaTime, AimIncreaseSpeed);
 				CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, MaxRightLocation.X, InDeltaTime, AimIncreaseSpeed);
 				CurrentAttackDelay = MaxAttackDelay;
+				UpdateCrosshairPositions();
 			}
-			UpdateCrosshairPositions();
 			return;
 		}
 	}
+	
     // 공격이 완전히 끝났을 때 (연속 사격 아닐 때)
     if (bAttackFinished == false)
     {
+    	float CurrentLifeTime = GetWorld()->GetTimeSeconds();
+    	if (CurrentLifeTime - LastFireTime < MaxAttackDelay)
+    	{
+    		return;
+    	}
 	    CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime,
 	                                            AimDecreaseSpeed);
 	    CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime,
@@ -109,12 +120,16 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 	    UpdateCrosshairPositions();
     }
-    
 }
 
 //todo 재장전시 prevent, 광클시 delay상태일때 prevent
 void UCrosshair::IncreaseAimWidth()
 {
+	if (bAttackStarted == true)
+	{
+		return;
+	}
+	
 	bAttackStarted = true;
 	bAttackFinished = false;
 
@@ -127,11 +142,11 @@ void UCrosshair::IncreaseAimWidth()
 		{
 		case EPlayerWeaponType::EPW_Rifle:
 			SetAimIncreaseSpeed(10.f);
-			SetAimDecreaseSpeed(5.f);
+			SetAimDecreaseSpeed(2.f);
 			break;
 		case EPlayerWeaponType::EPW_Shotgun:
 			SetAimIncreaseSpeed(30.f);
-			SetAimDecreaseSpeed(10.f);
+			SetAimDecreaseSpeed(0.5f);
 			break;
 		case EPlayerWeaponType::EPW_Katana:
 			SetAimIncreaseSpeed(0);

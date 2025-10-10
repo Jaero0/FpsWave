@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "FpsWaveWeapon.generated.h"
 
+//todo Attack Delegate에 Crosshair등록햇 에임 벌리고 줄이기
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTriggerMontage);
 
 UCLASS()
