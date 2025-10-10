@@ -3,6 +3,8 @@
 
 #include "Weapon/Gun/Rifle.h"
 
+#include "Controllers/FpsWaveCharacterController.h"
+
 
 // Sets default values
 ARifle::ARifle()

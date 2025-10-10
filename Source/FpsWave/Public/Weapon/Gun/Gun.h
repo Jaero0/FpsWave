@@ -9,8 +9,6 @@
 #include "Gun.generated.h"
 
 
-
-
 UCLASS()
 class FPSWAVE_API AGun : public AFpsWaveWeapon, public IShootableInterface
 {
@@ -36,11 +34,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Gun")
 	int32 MaxBulletCount;
 	int32 CurrentBulletCount;
-	
+
 	bool bIsFiring;
 	UPROPERTY(EditAnywhere, Category="Gun")
 	float ReloadSpeed;
-	
 	UPROPERTY(EditAnywhere, Category="Gun")
 	float MaxSpreadAngle;
 	UPROPERTY(EditAnywhere, Category="Gun")
@@ -62,7 +59,7 @@ protected:
 	virtual void AttackFinished() override;
 	void RecoverAccuracy(float DeltaTime);
 
-UPROPERTY(EditAnywhere, Category = "Recoil")
+	UPROPERTY(EditAnywhere, Category = "Recoil")
 	float RecoilDuration = 0.15f; // 반동이 적용되는 시간
 	UPROPERTY(EditAnywhere, Category = "Recoil")
 	float RecoilInterpSpeed = 10.0f; // 보간 속도
@@ -71,15 +68,17 @@ UPROPERTY(EditAnywhere, Category = "Recoil")
 	float RecoilPitchMultiplier = 1.f;
 	UPROPERTY(EditAnywhere, Category="Recoil")
 	float RecoilYawMultiplier = 1.f;
-
-	virtual void Recoil();
-
-private:
 	FRotator TargetRecoilRotation;
 	FRotator CurrentRecoilRotation;
 	float RecoilProgress;
 	bool bIsRecoiling;
+	
+	virtual void Recoil();
+	
+	float LastFireTime = 0.f;
 
+private:
+	
 	
 
 public:
@@ -88,6 +87,7 @@ public:
 	virtual float GetAttackDelay() override;
 
 	int32 GetMaxBulletCount();
+	int32 GetCurrentBulletCount();
 	void ResetCurrentBulletCountToMax();
 
 };

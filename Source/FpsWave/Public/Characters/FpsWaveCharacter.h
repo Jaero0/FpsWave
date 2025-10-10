@@ -155,15 +155,6 @@ private:
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<class UAnimMontage> AttackMontage;
 	EAttackState PlayerAttackState = EAttackState::EAS_None;
-	TObjectPtr<UCameraShakeBase> CurrentCameraShake;
-	UPROPERTY(EditAnywhere, Category="Camera Shake")
-	TSubclassOf<class UCameraShakeBase> RifleCameraShake;
-	UPROPERTY(EditAnywhere, Category="Camera Shake")
-	TSubclassOf<class UCameraShakeBase> ShotgunCameraShake;
-	UPROPERTY(EditAnywhere, Category="Camera Shake")
-	TSubclassOf<class UCameraShakeBase> KatanaCameraShake;
-	UPROPERTY(EditAnywhere, Category="Camera Shake")
-	TSubclassOf<class UCameraShakeBase> WarHammerCameraShake;
 	void Attack();
 	UFUNCTION()
 	void PlayAttackMontage();
@@ -171,8 +162,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category="Reload");
 	TObjectPtr<UAnimMontage> ReloadMontage;
-	UPROPERTY(EditAnywhere, Category="Reload");
-	TObjectPtr<USoundBase> ReloadSound;
 	void Reload();
 	UFUNCTION(BlueprintCallable)
 	void ReloadEnd();

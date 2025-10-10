@@ -105,7 +105,7 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
     }
 }
 
-//todo 재장전시 prevnet
+//todo 재장전시 prevent, 광클시 delay상태일때 prevent
 void UCrosshair::IncreaseAimWidth()
 {
 	bAttackStarted = true;
@@ -138,6 +138,7 @@ void UCrosshair::IncreaseAimWidth()
 	}
 }
 
+//광클시 delay상태일때 prevent
 void UCrosshair::ResetAimWidth()
 {
 	bAttackStarted = false;

@@ -49,20 +49,25 @@ void AGun::Attack()
 	StartAutoFire();
 }
 
-void AGun::StartAutoFire()
+void AGun::StartAutoFire() 
 {
-	bIsFiring = true;
-	
-	// 첫 번째 총알 즉시 발사 (지연 없음)
-	FireSingleBullet();
+	float CurrentTime = GetWorld()->GetTimeSeconds();
     
-	// 이후 FireRate 간격으로 연속 발사 (루프 설정)
+	// AttackDelay가 지나지 않았으면 무시
+	if (CurrentTime - LastFireTime < AttackDelay)
+	{
+		return;
+	}
+    
+	bIsFiring = true;
+	LastFireTime = CurrentTime;
+	FireSingleBullet();
 	GetWorld()->GetTimerManager().SetTimer(
-		AttackTimer,
-		this,
-		&AGun::FireSingleBullet,
-		AttackDelay,
-		true  // 중요: true = 무한 반복!
+		AttackTimer, 
+		this, 
+		&AGun::FireSingleBullet, 
+		AttackDelay, 
+		true
 	);
 }
 
