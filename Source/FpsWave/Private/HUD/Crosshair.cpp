@@ -80,33 +80,36 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 				CurrentAttackDelay = MaxAttackDelay;
 			}
 			UpdateCrosshairPositions();
+			return;
 		}
 	}
-    else
+    // 공격이 완전히 끝났을 때 (연속 사격 아닐 때)
+    if (bAttackFinished == false)
     {
-        // 공격이 완전히 끝났을 때 (연속 사격 아닐 때)
-        if (bAttackFinished == false)
-        {
-            CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime, AimDecreaseSpeed);
-            CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime, AimDecreaseSpeed);
-            CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, DefaultLeftLocation.X, InDeltaTime, AimDecreaseSpeed);
-            CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, DefaultRightLocation.X, InDeltaTime, AimDecreaseSpeed);
-            
-            if (FMath::IsNearlyEqual(CurrentTopLocation.Y, DefaultTopLocation.Y, 0.5f) &&
-                FMath::IsNearlyEqual(CurrentBottomLocation.Y, DefaultBottomLocation.Y, 0.5f) &&
-                FMath::IsNearlyEqual(CurrentLeftLocation.X, DefaultLeftLocation.X, 0.5f) &&
-                FMath::IsNearlyEqual(CurrentRightLocation.X, DefaultRightLocation.X, 0.5f))
-            {
-                bAttackFinished = true;
-                CurrentTopLocation = DefaultTopLocation;
-                CurrentBottomLocation = DefaultBottomLocation;
-                CurrentLeftLocation = DefaultLeftLocation;
-                CurrentRightLocation = DefaultRightLocation;
-            }
+	    CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime,
+	                                            AimDecreaseSpeed);
+	    CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime,
+	                                               AimDecreaseSpeed);
+	    CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, DefaultLeftLocation.X, InDeltaTime,
+	                                             AimDecreaseSpeed);
+	    CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, DefaultRightLocation.X, InDeltaTime,
+	                                              AimDecreaseSpeed);
 
-            UpdateCrosshairPositions();
-        }
+	    if (FMath::IsNearlyEqual(CurrentTopLocation.Y, DefaultTopLocation.Y, 0.5f) &&
+		    FMath::IsNearlyEqual(CurrentBottomLocation.Y, DefaultBottomLocation.Y, 0.5f) &&
+		    FMath::IsNearlyEqual(CurrentLeftLocation.X, DefaultLeftLocation.X, 0.5f) &&
+		    FMath::IsNearlyEqual(CurrentRightLocation.X, DefaultRightLocation.X, 0.5f))
+	    {
+		    bAttackFinished = true;
+		    CurrentTopLocation = DefaultTopLocation;
+		    CurrentBottomLocation = DefaultBottomLocation;
+		    CurrentLeftLocation = DefaultLeftLocation;
+		    CurrentRightLocation = DefaultRightLocation;
+	    }
+
+	    UpdateCrosshairPositions();
     }
+    
 }
 
 //todo 재장전시 prevent, 광클시 delay상태일때 prevent
