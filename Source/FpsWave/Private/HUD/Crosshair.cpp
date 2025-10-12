@@ -12,42 +12,52 @@
 void UCrosshair::NativeConstruct()
 {
 	Super::NativeConstruct();
-
-	BindDelegates();
 	
 	DefaultTopLocation = Top->GetRenderTransform().Translation;
 	CurrentTopLocation = DefaultTopLocation;
+	PostTopLocation = CurrentTopLocation;
 	MaxTopLocation = DefaultTopLocation;
-	MaxTopLocation.Y -= 100.f;
+	MaxTopLocation.Y -= LimitAmount;
 	DefaultBottomLocation = Bottom->GetRenderTransform().Translation;
 	CurrentBottomLocation = DefaultBottomLocation;
+	PostBottomLocation = CurrentBottomLocation;
 	MaxBottomLocation = DefaultBottomLocation;
-	MaxBottomLocation.Y += 100.f;
+	MaxBottomLocation.Y += LimitAmount;
 	DefaultLeftLocation = Left->GetRenderTransform().Translation;
 	CurrentLeftLocation = DefaultLeftLocation;
+	PostLeftLocation = CurrentLeftLocation;
 	MaxLeftLocation = DefaultLeftLocation;
-	MaxLeftLocation.X -= 100.f;
+	MaxLeftLocation.X -= LimitAmount;
 	DefaultRightLocation = Right->GetRenderTransform().Translation;
 	CurrentRightLocation = DefaultRightLocation;
+	PostRightLocation = CurrentRightLocation;
 	MaxRightLocation = DefaultRightLocation;
-	MaxRightLocation.X += 100.f;
+	MaxRightLocation.X += LimitAmount;
+
+	GetWorld()->GetTimerManager().SetTimer(DelegateHandle,this, &UCrosshair::BindDelegates,0.2f);
 }
 
 void UCrosshair::BindDelegates()
 {
-	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	if (AFpsWaveCharacterController* PC = GetWorld()->GetFirstPlayerController<AFpsWaveCharacterController>())
 	{
-		if (PlayerController = Cast<AFpsWaveCharacterController>(PC))
+		PlayerController = PC;
+		
+		if (AFpsWaveCharacter* FpsWaveCharacter = Cast<AFpsWaveCharacter>(PC->GetPawn()))
 		{
-			PlayerController->OnAttackDelegate.AddUObject(this, &UCrosshair::IncreaseAimWidth);
-			PlayerController->OnAttackFinishedDelegate.AddUObject(this, &UCrosshair::ResetAimWidth);
-
-			if (AFpsWaveCharacter* FpsWaveCharacter = Cast<AFpsWaveCharacter>(PlayerController->GetPawn()))
+			Player = FpsWaveCharacter;
+			Player->OnWeaponChangeDelegate.AddUObject(this, &UCrosshair::ChangeDelegate);
+			if (auto Weapon = Player->GetEquippedWeapon())
 			{
-				Player = FpsWaveCharacter;
+				CurrentDelegateHandle = Weapon->OnAttackDelegate.AddUObject(this, &UCrosshair::OnAttackDelegate);
 			}
 		}
 	}
+}
+
+void UCrosshair::ChangeDelegate(TObjectPtr<class AFpsWaveWeapon> Weapon)
+{
+	Weapon->OnAttackDelegate.AddUObject(this, &UCrosshair::OnAttackDelegate);
 }
 
 void UCrosshair::UpdateCrosshairPositions()
@@ -61,92 +71,76 @@ void UCrosshair::UpdateCrosshairPositions()
 void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
-	
-	if (Player->GetEquippedWeapon()->GetCurrentBulletCount() > 0)
-	{
-		if (bAttackStarted == true)
-		{
-			// Pending 시간 카운트
-			CurrentAttackDelay -= InDeltaTime;
-			float CurrentLifeTime = GetWorld()->GetTimeSeconds();
-			if (CurrentLifeTime - LastFireTime < MaxAttackDelay)
-			{
-				return;
-			}
 
-			//공격시
-			if (CurrentAttackDelay <= 0.f)
-			{
-				LastFireTime = CurrentLifeTime;
-				CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, MaxTopLocation.Y, InDeltaTime, AimIncreaseSpeed);
-				CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, MaxBottomLocation.Y, InDeltaTime, AimIncreaseSpeed);
-				CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, MaxLeftLocation.X, InDeltaTime, AimIncreaseSpeed);
-				CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, MaxRightLocation.X, InDeltaTime, AimIncreaseSpeed);
-				CurrentAttackDelay = MaxAttackDelay;
-				UpdateCrosshairPositions();
-			}
-			return;
-		}
-	}
-	
-    // 공격이 완전히 끝났을 때 (연속 사격 아닐 때)
-    if (bAttackFinished == false)
+    //공격시 todo
+    if (CrosshairState == ECrosshairState::ECS_Increasing)
     {
-    	float CurrentLifeTime = GetWorld()->GetTimeSeconds();
-    	if (CurrentLifeTime - LastFireTime < MaxAttackDelay)
+    	CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, PostTopLocation.Y, InDeltaTime,
+											AimIncreaseSpeed);
+    	CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, PostBottomLocation.Y, InDeltaTime,
+												   AimIncreaseSpeed);
+    	CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, PostLeftLocation.X, InDeltaTime,
+												 AimIncreaseSpeed);
+    	CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, PostRightLocation.X, InDeltaTime,
+												  AimIncreaseSpeed);
+    	UpdateCrosshairPositions();
+    }
+
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+    if (CurrentTime - LastIncreaseTime > AttackDelay && CrosshairState == ECrosshairState::ECS_Increasing)
+    {
+	    CrosshairState = ECrosshairState::ECS_Decreasing;
+    }
+
+    if (CrosshairState == ECrosshairState::ECS_Idle)
+    {
+	    return;
+    }
+
+    if (CrosshairState == ECrosshairState::ECS_Decreasing)
+    {
+    	CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime,
+												AimDecreaseSpeed);
+    	CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime,
+												   AimDecreaseSpeed);
+    	CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, DefaultLeftLocation.X, InDeltaTime,
+												 AimDecreaseSpeed);
+    	CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, DefaultRightLocation.X, InDeltaTime,
+												  AimDecreaseSpeed);
+
+    	if (IsCurrentLocationNearToDefaultLocation())
     	{
-    		return;
+    		CurrentTopLocation = DefaultTopLocation;
+    		CurrentBottomLocation = DefaultBottomLocation;
+    		CurrentLeftLocation = DefaultLeftLocation;
+    		CurrentRightLocation = DefaultRightLocation;
+    		CrosshairState = ECrosshairState::ECS_Idle;
     	}
-	    CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, DefaultTopLocation.Y, InDeltaTime,
-	                                            AimDecreaseSpeed);
-	    CurrentBottomLocation.Y = FMath::FInterpTo(CurrentBottomLocation.Y, DefaultBottomLocation.Y, InDeltaTime,
-	                                               AimDecreaseSpeed);
-	    CurrentLeftLocation.X = FMath::FInterpTo(CurrentLeftLocation.X, DefaultLeftLocation.X, InDeltaTime,
-	                                             AimDecreaseSpeed);
-	    CurrentRightLocation.X = FMath::FInterpTo(CurrentRightLocation.X, DefaultRightLocation.X, InDeltaTime,
-	                                              AimDecreaseSpeed);
 
-	    if (FMath::IsNearlyEqual(CurrentTopLocation.Y, DefaultTopLocation.Y, 0.5f) &&
-		    FMath::IsNearlyEqual(CurrentBottomLocation.Y, DefaultBottomLocation.Y, 0.5f) &&
-		    FMath::IsNearlyEqual(CurrentLeftLocation.X, DefaultLeftLocation.X, 0.5f) &&
-		    FMath::IsNearlyEqual(CurrentRightLocation.X, DefaultRightLocation.X, 0.5f))
-	    {
-		    bAttackFinished = true;
-		    CurrentTopLocation = DefaultTopLocation;
-		    CurrentBottomLocation = DefaultBottomLocation;
-		    CurrentLeftLocation = DefaultLeftLocation;
-		    CurrentRightLocation = DefaultRightLocation;
-	    }
-
-	    UpdateCrosshairPositions();
+    	UpdateCrosshairPositions();
     }
 }
 
-//todo 재장전시 prevent, 광클시 delay상태일때 prevent
-void UCrosshair::IncreaseAimWidth()
+//todo delegate 등록 후 
+void UCrosshair::OnAttackDelegate()
 {
-	if (bAttackStarted == true)
-	{
-		return;
-	}
+	CrosshairState = ECrosshairState::ECS_Increasing;
+	LastIncreaseTime = GetWorld()->GetTimeSeconds();
 	
-	bAttackStarted = true;
-	bAttackFinished = false;
-
 	if (Player)
 	{
-		MaxAttackDelay = Player->GetEquippedWeapon()->GetAttackDelay();
-		CurrentAttackDelay = -1;
-
+		float GunIncreaseSpeed = LimitAmount / (Player->GetEquippedWeapon()->GetMaxBulletCount() / 2) * 2;
+		AttackDelay = Player->GetEquippedWeapon()->GetAttackDelay() + 0.3f;
+		
 		switch (Player->GetPlayerWeaponType())
 		{
 		case EPlayerWeaponType::EPW_Rifle:
-			SetAimIncreaseSpeed(10.f);
-			SetAimDecreaseSpeed(2.f);
+			SetAimIncreaseSpeed(GunIncreaseSpeed);
+			SetAimDecreaseSpeed(6.f);
 			break;
 		case EPlayerWeaponType::EPW_Shotgun:
-			SetAimIncreaseSpeed(30.f);
-			SetAimDecreaseSpeed(0.5f);
+			SetAimIncreaseSpeed(GunIncreaseSpeed);
+			SetAimDecreaseSpeed(6.f);
 			break;
 		case EPlayerWeaponType::EPW_Katana:
 			SetAimIncreaseSpeed(0);
@@ -158,12 +152,11 @@ void UCrosshair::IncreaseAimWidth()
 			break;
 		}
 	}
-}
 
-//광클시 delay상태일때 prevent
-void UCrosshair::ResetAimWidth()
-{
-	bAttackStarted = false;
+	PostTopLocation.Y = FMath::Max(CurrentTopLocation.Y - AimIncreaseSpeed, MaxTopLocation.Y);
+	PostBottomLocation.Y = FMath::Min(CurrentBottomLocation.Y + AimIncreaseSpeed, MaxBottomLocation.Y);
+	PostLeftLocation.X = FMath::Max(CurrentLeftLocation.X - AimIncreaseSpeed, MaxLeftLocation.X);
+	PostRightLocation.X = FMath::Min(CurrentRightLocation.X + AimIncreaseSpeed, MaxRightLocation.X);
 }
 
 FVector2d UCrosshair::GetAimLocation()
@@ -174,7 +167,7 @@ FVector2d UCrosshair::GetAimLocation()
 	FVector2D WidgetSize = Geometry.GetAbsoluteSize(); // 위젯 크기 가져오기
     
 	// 중심점 계산
-	FVector2D AbsoluteCenterPosition = AbsolutePosition + (WidgetSize * 0.5f);
+	FVector2D AbsoluteCenterPosition = AbsolutePosition + WidgetSize * 0.5f;
     
 	FVector2D PixelPosition;
 	FVector2D ViewportPosition;
@@ -187,6 +180,22 @@ FVector2d UCrosshair::GetAimLocation()
 	);
     
 	return PixelPosition;
+}
+
+bool UCrosshair::IsCurrentLocationNearToDefaultLocation()
+{
+	return FMath::IsNearlyEqual(CurrentTopLocation.Y, DefaultTopLocation.Y, 0.5f) &&
+		FMath::IsNearlyEqual(CurrentBottomLocation.Y, DefaultBottomLocation.Y, 0.5f) &&
+		FMath::IsNearlyEqual(CurrentLeftLocation.X, DefaultLeftLocation.X, 0.5f) &&
+		FMath::IsNearlyEqual(CurrentRightLocation.X, DefaultRightLocation.X, 0.5f);
+}
+
+bool UCrosshair::IsCurrentLocationNearToMaxLocation()
+{
+	return FMath::IsNearlyEqual(CurrentTopLocation.Y, MaxTopLocation.Y, 0.5f) &&
+		FMath::IsNearlyEqual(CurrentBottomLocation.Y, MaxBottomLocation.Y, 0.5f) &&
+		FMath::IsNearlyEqual(CurrentLeftLocation.X, MaxLeftLocation.X, 0.5f) &&
+		FMath::IsNearlyEqual(CurrentRightLocation.X, MaxRightLocation.X, 0.5f);
 }
 
 void UCrosshair::SetAimIncreaseSpeed(float Speed)

@@ -8,6 +8,7 @@
 #include "Weapon/ShootableInterface.h"
 #include "Gun.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFireDelegate);
 
 UCLASS()
 class FPSWAVE_API AGun : public AFpsWaveWeapon, public IShootableInterface

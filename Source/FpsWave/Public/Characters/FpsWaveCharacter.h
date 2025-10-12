@@ -76,6 +76,8 @@ public:
 	// 기타 필요한 무기 정보들 추가 가능
 };
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnWeaponChangeDelegate, TObjectPtr<class AFpsWaveWeapon> EquippedWeapon);
+
 UCLASS()
 class FPSWAVE_API AFpsWaveCharacter : public ACharacter
 {
@@ -85,6 +87,7 @@ public:
 	AFpsWaveCharacter();
 	virtual void Tick(float DeltaTime) override;
 	void ChangeCapsuleSizeCrouch(EMoveState MoveState);
+	FOnWeaponChangeDelegate OnWeaponChangeDelegate;
 
 protected:
 	// Called when the game starts or when spawned
@@ -154,9 +157,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<class UAnimMontage> AttackMontage;
+	FDelegateHandle CurrentDelegateHandle;
 	EAttackState PlayerAttackState = EAttackState::EAS_None;
 	void Attack();
-	UFUNCTION()
 	void PlayAttackMontage();
 	void AttackFinished();
 

@@ -46,6 +46,7 @@ void AGun::BeginPlay()
 void AGun::Attack()
 {
 	// 자동 발사 시작
+	Super::Attack();
 	StartAutoFire();
 }
 
@@ -94,17 +95,17 @@ void AGun::FireSingleBullet()
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), FireSound, this->GetActorLocation());
 	}
 
-	if (OnTriggerMontage.IsBound())
-	{
-		OnTriggerMontage.Broadcast();
-	}
-
 	if (!PlayerController)
 	{
 		if (auto Cont = GetWorld()->GetFirstPlayerController<AFpsWaveCharacterController>())
 		{
 			PlayerController = Cont;
 		}
+	}
+
+	if (OnAttackDelegate.IsBound())
+	{
+		OnAttackDelegate.Broadcast();
 	}
 
 	//필수
@@ -140,6 +141,7 @@ void AGun::FireSingleBullet()
 	
 	// 정확도가 낮을수록 큰 각도
 	float SpreadAngle = FMath::Lerp(MaxSpreadAngle, MinSpreadAngle, NormalizedAccuracy);
+
 
 	// 랜덤 방향으로 각도 오프셋 추가
 	FVector SpreadDirection = FMath::VRandCone(

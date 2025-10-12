@@ -8,7 +8,7 @@
 
 //todo Attack Delegate에 Crosshair등록햇 에임 벌리고 줄이기
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTriggerMontage);
+DECLARE_MULTICAST_DELEGATE(FOnAttackDelegate);
 
 UCLASS()
 class FPSWAVE_API AFpsWaveWeapon : public AActor
@@ -19,7 +19,7 @@ public:
 	AFpsWaveWeapon();
 	virtual void Tick(float DeltaTime) override;
 
-	FOnTriggerMontage OnTriggerMontage;
+	FOnAttackDelegate OnAttackDelegate;
 	
 	virtual void Attack();
 	virtual void AttackFinished();

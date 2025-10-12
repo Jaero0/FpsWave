@@ -78,6 +78,11 @@ void AFpsWaveCharacter::BindDelegate()
 		Cont->OnAttackFinishedDelegate.AddUObject(this, &AFpsWaveCharacter::AttackFinished);
 		Cont->OnReloadDelegate.AddUObject(this, &AFpsWaveCharacter::Reload);
 	}
+
+	if (EquippedWeapon)
+	{
+		CurrentDelegateHandle = EquippedWeapon->OnAttackDelegate.AddUObject(this, &AFpsWaveCharacter::PlayAttackMontage);
+	}
 }
 
 // Called when the game starts or when spawned
@@ -86,8 +91,6 @@ void AFpsWaveCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	//GetWorld()->GetTimerManager().SetTimer(DelegateTimer, this, &AFpsWaveCharacter::BindDelegate, 0.2f);
-
-	BindDelegate();
 	
 	GetMesh()->HideBoneByName(FName("weapon_r"), PBO_None);
 	GetMesh()->HideBoneByName(FName("weapon_l"), PBO_None);
@@ -103,9 +106,10 @@ void AFpsWaveCharacter::BeginPlay()
 
 	EquippedWeapon = WeaponInventory.AttachedRifle;
 	EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("rightHandGunSocket"));
-	EquippedWeapon->OnTriggerMontage.AddDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
 
 	WeaponEquipType = EPlayerWeaponType::EPW_Rifle;
+
+	BindDelegate();
 }
 
 void AFpsWaveCharacter::HideHeadBone()
@@ -235,6 +239,11 @@ void AFpsWaveCharacter::Interact()
 		{
 			GetMesh()->GetAnimInstance()->Montage_Play(SwapWeaponMontage);
 		}
+
+		if (OnWeaponChangeDelegate.IsBound())
+		{
+			OnWeaponChangeDelegate.Broadcast(EquippedWeapon);
+		}
 		
 		DetectedWeapon = nullptr;
 		OverlapDetectedType = EOverlapDetected::EOD_None;
@@ -245,7 +254,7 @@ void AFpsWaveCharacter::Interact()
 void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 {
 	// 기존 attack montage델리게이트 해제
-	EquippedWeapon->OnTriggerMontage.RemoveDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
+	EquippedWeapon->OnAttackDelegate.Remove(CurrentDelegateHandle);
 	// 새로 장착할 무기와 현재 무기가 같은지 미리 확인
 	AFpsWaveWeapon* NewWeapon = nullptr;
 	FName SocketName;
@@ -313,7 +322,12 @@ void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 	EquippedWeapon->SetActorHiddenInGame(false);
 	EquippedWeapon->GetItemMesh()->AttachToComponent(GetMesh(), Rules, SocketName);
 	// 새 attack montage델리게이트 바인딩
-	EquippedWeapon->OnTriggerMontage.AddDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
+	CurrentDelegateHandle = EquippedWeapon->OnAttackDelegate.AddUObject(this, &AFpsWaveCharacter::PlayAttackMontage);
+
+	if (OnWeaponChangeDelegate.IsBound())
+	{
+		OnWeaponChangeDelegate.Broadcast(EquippedWeapon);
+	}
 }
 
 void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
@@ -331,7 +345,7 @@ void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
 	}
 
 	// 기존 attack montage델리게이트 해제
-	EquippedWeapon->OnTriggerMontage.RemoveDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
+	EquippedWeapon->OnAttackDelegate.Remove(CurrentDelegateHandle);
 
 	if (EquippedWeapon && EquippedWeapon->IsValidLowLevel())
 	{
@@ -378,7 +392,12 @@ void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
 	}
 	EquippedWeapon->SetActorHiddenInGame(false);
 	// 새 attack montage델리게이트 바인딩
-	EquippedWeapon->OnTriggerMontage.AddDynamic(this, &AFpsWaveCharacter::PlayAttackMontage);
+	CurrentDelegateHandle = EquippedWeapon->OnAttackDelegate.AddUObject(this, &AFpsWaveCharacter::PlayAttackMontage);
+
+	if (OnWeaponChangeDelegate.IsBound())
+	{
+		OnWeaponChangeDelegate.Broadcast(EquippedWeapon);
+	}
 }
 
 void AFpsWaveCharacter::PlayAttackMontage()
@@ -444,6 +463,8 @@ void AFpsWaveCharacter::Reload()
 			break;
 		case EPlayerWeaponType::EPW_Shotgun:
 			AnimInstance->Montage_JumpToSection("Shotgun");
+			break;
+		default:
 			break;
 		}
 	}

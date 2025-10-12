@@ -44,6 +44,7 @@ void AFpsWaveWeapon::Tick(float DeltaTime)
 
 void AFpsWaveWeapon::Attack()
 {
+	
 }
 
 void AFpsWaveWeapon::AttackFinished()

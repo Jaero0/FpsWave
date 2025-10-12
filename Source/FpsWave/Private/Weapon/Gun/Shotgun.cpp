@@ -69,17 +69,18 @@ void AShotgun::FireSingleBullet()
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), FireSound, this->GetActorLocation());
 	}
 
-	if (OnTriggerMontage.IsBound())
-	{
-		OnTriggerMontage.Broadcast();
-	}
-
 	if (!PlayerController)
 	{
 		if (auto Cont = GetWorld()->GetFirstPlayerController<AFpsWaveCharacterController>())
 		{
 			PlayerController = Cont;
 		}
+	}
+	
+	if (OnAttackDelegate.IsBound())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("OnAttackDelegate BroadCast"));
+		OnAttackDelegate.Broadcast();
 	}
 
 	//필수
