@@ -15,7 +15,7 @@ DECLARE_DELEGATE(FOnFreeCameraStartedDelegate)
 DECLARE_DELEGATE(FOnFreeCameraCompletedDelegate)
 DECLARE_DELEGATE(FOnInteractionDelegate)
 //todo int파라미터를 EKeyInput으로 교체하기
-DECLARE_DELEGATE_OneParam(FOnWeaponChange_Key_Delegate, int)
+DECLARE_DELEGATE_OneParam(FOnWeaponChange_Key_Delegate, EKeyInput)
 DECLARE_DELEGATE_OneParam(FOnWeaponChange_MouseWheel_Delegate, int)
 DECLARE_MULTICAST_DELEGATE(FOnAttackDelegate)
 DECLARE_MULTICAST_DELEGATE(FOnAttackFinishedDelegate)

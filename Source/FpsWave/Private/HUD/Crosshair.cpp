@@ -72,7 +72,6 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
 
-    //공격시 todo
     if (CrosshairState == ECrosshairState::ECS_Increasing)
     {
     	CurrentTopLocation.Y = FMath::FInterpTo(CurrentTopLocation.Y, PostTopLocation.Y, InDeltaTime,
@@ -121,7 +120,6 @@ void UCrosshair::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
     }
 }
 
-//todo delegate 등록 후 
 void UCrosshair::OnAttackDelegate()
 {
 	CrosshairState = ECrosshairState::ECS_Increasing;

@@ -151,7 +151,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<class UAnimMontage> SwapWeaponMontage;
-	void ChangeWeapon_Key(int key);
+	void ChangeWeapon_Key(EKeyInput Key);
 	int WeaponIndex = 1;
 	void ChangeWeapon_MouseWheel(int input);
 	

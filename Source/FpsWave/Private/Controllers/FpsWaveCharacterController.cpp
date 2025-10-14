@@ -75,7 +75,7 @@ void AFpsWaveCharacterController::ChangeWeapon1()
 {
 	if (OnWeaponChange_Key_Delegate.IsBound())
 	{
-		OnWeaponChange_Key_Delegate.Execute(1);
+		OnWeaponChange_Key_Delegate.Execute(EKeyInput::EKI_1);
 	}
 }
 
@@ -83,7 +83,7 @@ void AFpsWaveCharacterController::ChangeWeapon2()
 {
 	if (OnWeaponChange_Key_Delegate.IsBound())
 	{
-		OnWeaponChange_Key_Delegate.Execute(2);
+		OnWeaponChange_Key_Delegate.Execute(EKeyInput::EKI_2);
 	}
 }
 
@@ -91,7 +91,7 @@ void AFpsWaveCharacterController::ChangeWeapon3()
 {
 	if (OnWeaponChange_Key_Delegate.IsBound())
 	{
-		OnWeaponChange_Key_Delegate.Execute(3);
+		OnWeaponChange_Key_Delegate.Execute(EKeyInput::EKI_3);
 	}
 }
 
@@ -99,7 +99,7 @@ void AFpsWaveCharacterController::ChangeWeapon4()
 {
 	if (OnWeaponChange_Key_Delegate.IsBound())
 	{
-		OnWeaponChange_Key_Delegate.Execute(4);
+		OnWeaponChange_Key_Delegate.Execute(EKeyInput::EKI_4);
 	}
 }
 

@@ -254,7 +254,7 @@ void AFpsWaveCharacter::Interact()
 	}
 }
 
-void AFpsWaveCharacter::ChangeWeapon_Key(int key)
+void AFpsWaveCharacter::ChangeWeapon_Key(EKeyInput Key)
 {
 	// 기존 attack montage델리게이트 해제
 	EquippedWeapon->AttackFinished();
@@ -264,14 +264,14 @@ void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 	FName SocketName;
     
 	// 키에 따른 새 무기 결정
-	if (key == 1 || key == 2)
+	if (Key == EKeyInput::EKI_1 || Key == EKeyInput::EKI_2)
 	{
-		if (key == 1)
+		if (Key == EKeyInput::EKI_1)
 		{
 			NewWeapon = WeaponInventory.AttachedRifle;
 			WeaponEquipType = EPlayerWeaponType::EPW_Rifle;
 		}
-		else if (key == 2)
+		else if (Key == EKeyInput::EKI_2)
 		{
 			NewWeapon = WeaponInventory.AttachedShotgun;
 			WeaponEquipType = EPlayerWeaponType::EPW_Shotgun;
@@ -279,14 +279,14 @@ void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 		
 		SocketName = FName("rightHandGunSocket");
 	}
-	else if (key == 3 || key == 4)
+	else if (Key == EKeyInput::EKI_3 || Key == EKeyInput::EKI_4)
 	{
-		if (key == 3)
+		if (Key == EKeyInput::EKI_3)
 		{
 			NewWeapon = WeaponInventory.AttachedKatana;
 			WeaponEquipType = EPlayerWeaponType::EPW_Katana;
 		}
-		else if (key == 4)
+		else if (Key == EKeyInput::EKI_4)
 		{
 			NewWeapon = WeaponInventory.AttachedHammer;
 			WeaponEquipType = EPlayerWeaponType::EPW_WarHammer;
