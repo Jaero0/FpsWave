@@ -192,6 +192,9 @@ void AFpsWaveCharacter::Interact()
 	case EOverlapDetected::EOD_Weapon:
 
 		if (!DetectedWeapon) return;
+
+		EquippedWeapon->AttackFinished();
+		
 		//바닥에 떨어진 무기로 교체시 장착중인 무기를 바닥에 떨어져 있던 무기로 교체
 		//set collision enabled 해제
 		if (DetectedWeapon.IsA(AGun::StaticClass()))
@@ -254,6 +257,7 @@ void AFpsWaveCharacter::Interact()
 void AFpsWaveCharacter::ChangeWeapon_Key(int key)
 {
 	// 기존 attack montage델리게이트 해제
+	EquippedWeapon->AttackFinished();
 	EquippedWeapon->OnAttackDelegate.Remove(CurrentDelegateHandle);
 	// 새로 장착할 무기와 현재 무기가 같은지 미리 확인
 	AFpsWaveWeapon* NewWeapon = nullptr;
@@ -344,6 +348,7 @@ void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
 		WeaponIndex = 1;
 	}
 
+	EquippedWeapon->AttackFinished();
 	// 기존 attack montage델리게이트 해제
 	EquippedWeapon->OnAttackDelegate.Remove(CurrentDelegateHandle);
 
@@ -402,6 +407,7 @@ void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
 
 void AFpsWaveCharacter::PlayAttackMontage()
 {
+	//todo melee어택시 rootmotion 애니메이션 분리?해야하나? 일단 켜면 전부 rootmotion이 적용됨
 	if (AttackMontage)
 	{
 		GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
@@ -415,9 +421,8 @@ void AFpsWaveCharacter::PlayAttackMontage()
 		case EPlayerWeaponType::EPW_Shotgun:
 			GetMesh()->GetAnimInstance()->Montage_JumpToSection(FName("Shotgun"), AttackMontage);
 			break;
-		case EPlayerWeaponType::EPW_Katana:
-			break;
-		case EPlayerWeaponType::EPW_WarHammer:
+		default:
+			
 			break;
 		}
 	}

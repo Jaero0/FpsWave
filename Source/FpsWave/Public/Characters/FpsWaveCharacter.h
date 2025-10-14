@@ -157,6 +157,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<class UAnimMontage> AttackMontage;
+	//todo
+	UPROPERTY(EditAnywhere, Category="Animation")
+	TObjectPtr<class UAnimMontage> RootMotionAttackMontage;
 	FDelegateHandle CurrentDelegateHandle;
 	EAttackState PlayerAttackState = EAttackState::EAS_None;
 	void Attack();
