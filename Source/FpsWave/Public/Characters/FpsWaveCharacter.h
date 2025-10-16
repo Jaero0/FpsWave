@@ -145,12 +145,15 @@ private:
 	TObjectPtr<class AFpsWaveWeapon> EquippedWeapon;
 	UPROPERTY(VisibleAnywhere, Category="Weapon")
 	EOverlapDetected OverlapDetectedType = EOverlapDetected::EOD_None;
+	UPROPERTY(VisibleAnywhere)
 	EPlayerWeaponType WeaponEquipType = EPlayerWeaponType::EPW_Rifle;
 
 	void Interact();
 
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<class UAnimMontage> SwapWeaponMontage;
+	UPROPERTY(EditAnywhere, Category="Animation")
+	TObjectPtr<class UAnimMontage> RootMotionSwapWeaponMontage;
 	void ChangeWeapon_Key(EKeyInput Key);
 	int WeaponIndex = 1;
 	void ChangeWeapon_MouseWheel(int input);
@@ -165,6 +168,10 @@ private:
 	void Attack();
 	void PlayAttackMontage();
 	void AttackFinished();
+	int32 AttackCount = 0;
+	bool bIsAttacking = false;
+	bool bCanCombo = false;
+	bool bQueuedCombo = false;
 
 	UPROPERTY(EditAnywhere, Category="Reload");
 	TObjectPtr<UAnimMontage> ReloadMontage;
@@ -206,4 +213,9 @@ public:
 	EAttackState GetPlayerAttackState() const;
 
 	TObjectPtr<class AFpsWaveWeapon> GetEquippedWeapon();
+
+	void SetIsAttacking(bool IsAttacking);
+	void SetCanCombo(bool CanCombo);
+	bool GetQueuedCombo();
+	void SetQueuedCombo(bool QueuedCombo);
 };

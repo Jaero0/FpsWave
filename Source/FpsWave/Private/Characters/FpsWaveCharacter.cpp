@@ -8,6 +8,7 @@
 #include "Controllers/FpsWaveCharacterController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Weapon/FpsWaveWeapon.h"
 #include "Weapon/Gun/Gun.h"
 #include "Weapon/Gun/Rifle.h"
@@ -238,9 +239,16 @@ void AFpsWaveCharacter::Interact()
 			EquippedWeapon = Melee;
 		}
 
-		if (SwapWeaponMontage)
+		if (SwapWeaponMontage && RootMotionAttackMontage)
 		{
-			GetMesh()->GetAnimInstance()->Montage_Play(SwapWeaponMontage);
+			if (WeaponEquipType == EPlayerWeaponType::EPW_Rifle || WeaponEquipType == EPlayerWeaponType::EPW_Shotgun)
+			{
+				GetMesh()->GetAnimInstance()->Montage_Play(SwapWeaponMontage);
+			}
+			else
+			{
+				GetMesh()->GetAnimInstance()->Montage_Play(RootMotionAttackMontage);
+			}
 		}
 
 		if (OnWeaponChangeDelegate.IsBound())
@@ -407,22 +415,24 @@ void AFpsWaveCharacter::ChangeWeapon_MouseWheel(int input)
 
 void AFpsWaveCharacter::PlayAttackMontage()
 {
-	//todo melee어택시 rootmotion 애니메이션 분리?해야하나? 일단 켜면 전부 rootmotion이 적용됨
-	if (AttackMontage)
+	if (AttackMontage && RootMotionAttackMontage)
 	{
-		GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
-
 		switch (WeaponEquipType)
 		{
 			//todo
 		case EPlayerWeaponType::EPW_Rifle:
+			GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
 			GetMesh()->GetAnimInstance()->Montage_JumpToSection(FName("Rifle"), AttackMontage);
 			break;
 		case EPlayerWeaponType::EPW_Shotgun:
+			GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
 			GetMesh()->GetAnimInstance()->Montage_JumpToSection(FName("Shotgun"), AttackMontage);
 			break;
 		default:
-			
+			GetMesh()->GetAnimInstance()->Montage_Play(RootMotionAttackMontage);
+			FName ComboName(FString("Combo" + FString::FromInt(EquippedWeapon->GetCurrentComboCount())));
+			GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Blue, ComboName.ToString());
+			GetMesh()->GetAnimInstance()->Montage_JumpToSection(ComboName, RootMotionAttackMontage);
 			break;
 		}
 	}
@@ -432,7 +442,30 @@ void AFpsWaveCharacter::Attack()
 {
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->Attack();
+		if (WeaponEquipType == EPlayerWeaponType::EPW_Katana || WeaponEquipType == EPlayerWeaponType::EPW_WarHammer)
+		{
+			if (bIsAttacking == true)
+			{
+				if (bCanCombo == true)
+				{
+					bQueuedCombo = true;
+				}
+				else
+				{
+					return;
+				}
+			}
+			else
+			{
+				EquippedWeapon->AttackFinished();
+				EquippedWeapon->Attack();
+			}
+		}
+		else
+		{
+			EquippedWeapon->Attack();
+		}
+		
 		PlayerAttackState = EAttackState::EAS_Attack;
 	}
 }
@@ -441,7 +474,18 @@ void AFpsWaveCharacter::AttackFinished()
 {
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->AttackFinished();
+		if (WeaponEquipType == EPlayerWeaponType::EPW_Katana || WeaponEquipType == EPlayerWeaponType::EPW_WarHammer)
+		{
+			/*if (bCanCombo == false)
+			{
+				EquippedWeapon->AttackFinished();
+			}*/
+		}
+		else
+		{
+			EquippedWeapon->AttackFinished();
+		}
+
 		PlayerAttackState = EAttackState::EAS_None;
 	}
 }
@@ -455,6 +499,7 @@ void AFpsWaveCharacter::Reload()
 	
 	if (WeaponEquipType == EPlayerWeaponType::EPW_Rifle || WeaponEquipType == EPlayerWeaponType::EPW_Shotgun)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Reload"));
 		PlayerAttackState = EAttackState::EAS_Reload;
 
 		auto AnimInstance = GetMesh()->GetAnimInstance();
@@ -478,7 +523,6 @@ void AFpsWaveCharacter::Reload()
 //ABP에서 ReloadEndNotify호출시 실행
 void AFpsWaveCharacter::ReloadEnd()
 {
-	UE_LOG(LogTemp, Warning, TEXT("AnimNotify_AttackAvailable called"));
 	PlayerAttackState = EAttackState::EAS_Attack;
 
 	if (auto Gun = Cast<AGun>(EquippedWeapon))
@@ -566,6 +610,26 @@ EAttackState AFpsWaveCharacter::GetPlayerAttackState() const
 TObjectPtr<AFpsWaveWeapon> AFpsWaveCharacter::GetEquippedWeapon()
 {
 	return EquippedWeapon;
+}
+
+void AFpsWaveCharacter::SetIsAttacking(bool IsAttacking)
+{
+	this->bIsAttacking = IsAttacking;
+}
+
+void AFpsWaveCharacter::SetCanCombo(bool CanCombo)
+{
+	this->bCanCombo = CanCombo;
+}
+
+bool AFpsWaveCharacter::GetQueuedCombo()
+{
+	return bQueuedCombo;
+}
+
+void AFpsWaveCharacter::SetQueuedCombo(bool QueuedCombo)
+{
+	this->bQueuedCombo = QueuedCombo;
 }
 
 #pragma endregion

@@ -22,7 +22,32 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	virtual void Attack() override;
+	virtual void AttackFinished() override;
+
+protected:
+	virtual void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult) override;
+	
+	virtual void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex) override;
+
+	int32 CurrentComboCount = 1;
+
+private:
+	bool bIsAttacking = false;
+
+public:
+	virtual int32 GetCurrentComboCount() override;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	virtual float GetAttackDelay() override;
+	virtual void ResetComboCount() override;
 };

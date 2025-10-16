@@ -48,12 +48,14 @@ protected:
 	int32 CurrentBulletCount;
 	UPROPERTY(EditAnywhere, Category="Gun")
 	float AttackDelay;
+	int32 CurrentComboCount = 0;
 
 private:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<class UBoxComponent> BoxComponent;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<class UStaticMeshComponent> ItemMesh;
+
 
 public:	
 	FORCEINLINE
@@ -71,4 +73,7 @@ public:
 	virtual float GetAttackDelay();
 	virtual int32 GetMaxBulletCount();
 	virtual int32 GetCurrentBulletCount();
+
+	virtual int32 GetCurrentComboCount();
+	virtual void ResetComboCount();
 };

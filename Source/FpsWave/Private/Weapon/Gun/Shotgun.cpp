@@ -79,7 +79,6 @@ void AShotgun::FireSingleBullet()
 	
 	if (OnAttackDelegate.IsBound())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("OnAttackDelegate BroadCast"));
 		OnAttackDelegate.Broadcast();
 	}
 

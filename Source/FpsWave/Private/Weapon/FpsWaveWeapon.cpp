@@ -94,3 +94,13 @@ int32 AFpsWaveWeapon::GetCurrentBulletCount()
 	return CurrentBulletCount;
 }
 
+int32 AFpsWaveWeapon::GetCurrentComboCount()
+{
+	return CurrentComboCount;
+}
+
+void AFpsWaveWeapon::ResetComboCount()
+{
+	CurrentComboCount = 0;
+}
+
