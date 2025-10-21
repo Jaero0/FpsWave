@@ -18,6 +18,21 @@ void AKatana::BeginPlay()
 	
 }
 
+void AKatana::Attack()
+{
+	Super::Attack();
+}
+
+void AKatana::OnHitBoxOverlap(UPrimitiveComponent* OverlappedComponent,
+                              AActor* OtherActor,
+                              UPrimitiveComponent* OtherComp,
+                              int32 OtherBodyIndex,
+                              bool bFromSweep,
+                              const FHitResult& SweepResult)
+{
+	Super::OnHitBoxOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+}
+
 // Called every frame
 void AKatana::Tick(float DeltaTime)
 {

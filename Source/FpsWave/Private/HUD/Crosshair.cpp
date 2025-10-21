@@ -142,11 +142,11 @@ void UCrosshair::OnAttackDelegate()
 			break;
 		case EPlayerWeaponType::EPW_Katana:
 			SetAimIncreaseSpeed(0);
-			SetAimDecreaseSpeed(0);
+			SetAimDecreaseSpeed(12.f);
 			break;
 		case EPlayerWeaponType::EPW_WarHammer:
 			SetAimIncreaseSpeed(0);
-			SetAimDecreaseSpeed(0);
+			SetAimDecreaseSpeed(12.f);
 			break;
 		}
 	}

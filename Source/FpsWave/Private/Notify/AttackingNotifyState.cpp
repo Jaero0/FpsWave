@@ -14,7 +14,6 @@ void UAttackingNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp,
 	
 	if (AFpsWaveCharacter* Char = Cast<AFpsWaveCharacter>(MeshComp->GetOwner()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("bIsAttacking: true"));
 		Char->SetIsAttacking(true);
 	}
 		
@@ -26,8 +25,6 @@ void UAttackingNotifyState::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSeq
 
 	if (AFpsWaveCharacter* Char = Cast<AFpsWaveCharacter>(MeshComp->GetOwner()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("bIsAttacking: false"));
-		Char->SetQueuedCombo(false);
 		Char->SetIsAttacking(false);
 	}
 }

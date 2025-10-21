@@ -20,6 +20,17 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	virtual void Attack() override;
+
+protected:
+	virtual void OnHitBoxOverlap(UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult) override;
+
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 };
